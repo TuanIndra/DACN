@@ -44,6 +44,7 @@ public class UserService {
         userDTO.setUsername(user.getUsername());
         userDTO.setFullName(user.getFullName());
         userDTO.setAvatarUrl(user.getAvatarUrl());
+        userDTO.setBio(user.getBio());
         // Không bao gồm mật khẩu và email để bảo mật
         return userDTO;
     }

@@ -10,8 +10,6 @@ import com.example.WebSocialMedia_Server.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.example.WebSocialMedia_Server.DTO.UserDTO;
-import com.example.WebSocialMedia_Server.DTO.FriendshipDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,44 +80,7 @@ public class FriendshipService {
         friendshipRepository.delete(friendship);
     }
 
-//    // Lấy danh sách yêu cầu kết bạn đã nhận
-//    public List<Friendship> getReceivedFriendRequests(Long userId) {
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new RuntimeException("User not found"));
-//
-//        return friendshipRepository.findByAddresseeAndStatus(user, FriendshipStatus.PENDING);
-//    }
-//    public FriendshipDTO convertToDTO(Friendship friendship) {
-//        FriendshipDTO dto = new FriendshipDTO();
-//        dto.setId(friendship.getId());
-//        dto.setStatus(friendship.getStatus());
-//
-//        UserDTO requesterDTO = new UserDTO();
-//        requesterDTO.setId(friendship.getRequester().getId());
-//        requesterDTO.setUsername(friendship.getRequester().getUsername());
-//        requesterDTO.setFullName(friendship.getRequester().getFullName());
-//        requesterDTO.setAvatarUrl(friendship.getRequester().getAvatarUrl());
-//
-//        UserDTO addresseeDTO = new UserDTO();
-//        addresseeDTO.setId(friendship.getAddressee().getId());
-//        addresseeDTO.setUsername(friendship.getAddressee().getUsername());
-//        addresseeDTO.setFullName(friendship.getAddressee().getFullName());
-//        addresseeDTO.setAvatarUrl(friendship.getAddressee().getAvatarUrl());
-//
-//        dto.setRequester(requesterDTO);
-//        dto.setAddressee(addresseeDTO);
-//
-//        return dto;
-//    }
-//
-//    public List<FriendshipDTO> convertToDTOList(List<Friendship> friendships) {
-//        List<FriendshipDTO> dtoList = new ArrayList<>();
-//        for (Friendship friendship : friendships) {
-//            dtoList.add(convertToDTO(friendship));
-//        }
-//        return dtoList;
-//    }
-//    // Phương thức lấy danh sách bạn bè trả về danh sách User
+    // Phương thức lấy danh sách bạn bè trả về danh sách User
     public List<User> getFriends(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

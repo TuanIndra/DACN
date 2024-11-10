@@ -10,6 +10,7 @@ public class UserDTO {
     private String password;
     private String fullName;
     private String avatarUrl;
+    private String bio;
 
 
     public String getPassword() {

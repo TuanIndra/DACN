@@ -27,7 +27,12 @@ public class PostController {
 
     @Autowired
     private UserService userService;
-
+    // Endpoint để lấy tất cả bài viết
+    @GetMapping
+    public ResponseEntity<List<PostDTO>> getAllPosts() {
+        List<PostDTO> allPosts = postService.getAllPosts();
+        return ResponseEntity.ok(allPosts);
+    }
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostDTO> createPost(
             @RequestParam("post") String postJson,

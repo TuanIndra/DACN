@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -144,6 +145,10 @@ public class PostService {
         });
 
         return timelinePosts;
+    }
+    public List<PostDTO> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+        return posts.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
     public List<PostDTO> getNewsFeed(Long userId) {
         User user = userRepository.findById(userId)

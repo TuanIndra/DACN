@@ -1,18 +1,17 @@
+// src/utils/axiosConfig.js
+
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8082', // Thay thế bằng URL của backend của bạn
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: 'http://localhost:8082', // Thay bằng URL của backend
 });
 
-// Thêm interceptor để đính kèm token nếu cần
+// Thêm interceptor để đính kèm token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // Lấy token từ Local Storage
+    const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Đính kèm token vào header
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

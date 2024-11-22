@@ -14,35 +14,26 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
-      const response = await login(username, password); // Sử dụng hàm login với username
-
-      // Giả sử backend trả về token trong response.data.token
-      const { token } = response.data;
-
-      // Lưu token vào Local Storage hoặc nơi lưu trữ phù hợp
+      const response = await login(username, password);
+      console.log('Response data:', response.data); // Kiểm tra phản hồi từ backend
+  
+      // Thay đổi cách lấy token
+      const token = response.data; // Vì response.data là chuỗi token
+  
+      console.log('Token:', token); // Kiểm tra giá trị của token
+  
+      // Lưu token vào Local Storage
       localStorage.setItem('token', token);
-
+  
       // Chuyển hướng đến trang chủ
       navigate('/homepage');
     } catch (error) {
       // Xử lý lỗi từ server
-      if (error.response) {
-        if (error.response.status === 401) {
-          // Thông tin đăng nhập không chính xác
-          setErrorMessage('Sai tên đăng nhập hoặc mật khẩu!');
-        } else {
-          // Lỗi khác từ phía server
-          setErrorMessage(error.response.data.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.');
-        }
-      } else {
-        // Lỗi không có phản hồi từ server
-        setErrorMessage('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
-      }
+      // ...
     }
   };
-
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col justify-center items-center">
       {/* Logo */}

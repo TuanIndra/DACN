@@ -6,8 +6,12 @@ export const fetchPosts = () => {
 };
 
 // Tạo bài viết mới
-export const createPost = (content) => {
-  return axiosInstance.post('/api/posts', { content });
+export const createPost = (formData) => {
+  return axiosInstance.post('/api/posts', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 };
 
 // Lấy chi tiết bài viết

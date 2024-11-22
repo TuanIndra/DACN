@@ -2,6 +2,8 @@ package com.example.WebSocialMedia_Server.DTO;
 
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 public class UserDTO {
     private Long id;
@@ -11,6 +13,7 @@ public class UserDTO {
     private String fullName;
     private String avatarUrl;
     private String bio;
+    private Set<RoleDTO> roles;
 
 
     public String getPassword() {

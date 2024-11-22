@@ -80,26 +80,4 @@ public class FriendshipController {
         List<FriendshipDTO> sentRequests = friendshipService.getPendingSentRequests(userId);
         return ResponseEntity.ok(sentRequests);
     }
-
-
-//    @GetMapping("/requests")
-//    public ResponseEntity<List<FriendshipDTO>> getReceivedFriendRequests(Authentication authentication) {
-//        String username = authentication.getName();
-//        Long userId = userService.findByUsername(username).getId();
-//
-//        List<Friendship> friendRequests = friendshipService.getReceivedFriendRequests(userId);
-//        List<FriendshipDTO> dtoList = friendshipService.convertToDTOList(friendRequests);
-//        return ResponseEntity.ok(dtoList);
-//    }
-//
-//    // Lấy danh sách bạn bè
-//    @GetMapping
-//    public ResponseEntity<List<User>> getFriends(Authentication authentication) {
-//        String username = authentication.getName();
-//        Long userId = userService.findByUsername(username).getId();
-//
-//        List<User> friends = friendshipService.getFriends(userId);
-//        return ResponseEntity.ok(friends);
-//    }
-
 }

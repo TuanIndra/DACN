@@ -22,6 +22,18 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "enabled")
+    private boolean enabled = false; // Mặc định là chưa kích hoạt
+
+    // Getter và Setter cho enabled
+//    public boolean isEnabled() {
+//        return enabled;
+//    }
+//
+//    public void setEnabled(boolean enabled) {
+//        this.enabled = enabled;
+//    }
+
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
@@ -113,8 +125,8 @@ public class User {
     @ToString.Exclude
     private Set<GroupMember> groupMemberships;
 
-    public Long getId() {
-        return id;
-    }
+//    public Long getId() {
+//        return id;
+//    }
 
 }

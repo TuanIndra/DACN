@@ -11,6 +11,7 @@ public class CommentDTO {
     private Long postId;        // ID của bài viết
     private Long userId;        // ID của người dùng bình luận
     private String username;    // Tên người dùng
+    private String fullName;
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

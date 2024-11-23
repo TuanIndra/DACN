@@ -93,6 +93,10 @@ public class CommentService {
 
         return dto;
     }
+    //chuc năng dem bl
+    public int countCommentsByPostId(Long postId) {
+        return commentRepository.countByPostId(postId);
+    }
 
     // Các phương thức khác (xoá, sửa bình luận) nếu cần
 }

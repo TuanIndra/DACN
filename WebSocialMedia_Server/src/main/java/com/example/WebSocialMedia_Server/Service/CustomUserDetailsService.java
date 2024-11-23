@@ -23,12 +23,25 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsernameWithRoles(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        // Kiểm tra xem tài khoản đã kích hoạt chưa
+        if (!user.isEnabled()) {
+            throw new RuntimeException("User account is not verified");
+        }
+
         // Lấy danh sách quyền của người dùng
         Set<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getRoleName().name()))
                 .collect(Collectors.toSet());
 
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                user.isEnabled(), // enabled
+                true,             // accountNonExpired
+                true,             // credentialsNonExpired
+                true,             // accountNonLocked
+                authorities
+        );
     }
 }
 

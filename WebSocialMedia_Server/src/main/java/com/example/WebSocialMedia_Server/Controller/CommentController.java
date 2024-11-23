@@ -46,6 +46,11 @@ public class CommentController {
         List<CommentDTO> comments = commentService.getCommentsByPostId(postId);
         return ResponseEntity.ok(comments);
     }
-
+    // dem binh luan
+    @GetMapping("/posts/{postId}/comments/count")
+    public ResponseEntity<Integer> getCommentCountByPostId(@PathVariable Long postId) {
+        int count = commentService.countCommentsByPostId(postId);
+        return ResponseEntity.ok(count);
+    }
     // Các endpoint khác (xoá, sửa bình luận) nếu cần
 }

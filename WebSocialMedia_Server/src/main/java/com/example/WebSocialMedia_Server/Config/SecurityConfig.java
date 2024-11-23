@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/posts/**").permitAll()
                         .requestMatchers("/api/profile/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/comments/**").permitAll()
                         .requestMatchers("/api/friends/**").authenticated()
                         .anyRequest().authenticated()
                 )

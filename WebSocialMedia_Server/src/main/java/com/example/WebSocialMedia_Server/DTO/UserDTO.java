@@ -14,27 +14,5 @@ public class UserDTO {
     private String avatarUrl;
     private String bio;
     private Set<RoleDTO> roles;
-
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
 }
 

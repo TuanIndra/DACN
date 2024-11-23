@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 public class PostService {
 
     @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
     private PostRepository postRepository;
 
     @Autowired
@@ -248,7 +251,8 @@ public class PostService {
             }
             postDTO.setMediaList(mediaDTOList);
         }
-
+        int commentCount = commentRepository.countByPostId(post.getId());
+        postDTO.setCommentCount(commentCount);
         return postDTO;
     }
 }

@@ -5,21 +5,31 @@ import com.example.WebSocialMedia_Server.DTO.UserDTO;
 import com.example.WebSocialMedia_Server.Entity.Role;
 import com.example.WebSocialMedia_Server.Entity.RoleName;
 import com.example.WebSocialMedia_Server.Entity.User;
+import com.example.WebSocialMedia_Server.Entity.VerificationToken;
 import com.example.WebSocialMedia_Server.Repository.RoleRepository;
 import com.example.WebSocialMedia_Server.Repository.UserRepository;
 
+import com.example.WebSocialMedia_Server.Repository.VerificationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
+    @Autowired
+    private VerificationTokenRepository tokenRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private UserRepository userRepository;
@@ -36,7 +46,7 @@ public class UserService {
     private static final String DEFAULT_AVATAR_URL = "http://localhost:8082/uploads/default-avatar.png";
 
     @Transactional
-    public User registerUser(UserDTO userDTO) {
+    public UserDTO registerUser(UserDTO userDTO) {
         // Kiểm tra xem username hoặc email đã tồn tại chưa
         if (userRepository.existsByUsername(userDTO.getUsername())) {
             throw new RuntimeException("Tên người dùng đã tồn tại");
@@ -53,6 +63,7 @@ public class UserService {
                 .password(passwordEncoder.encode(userDTO.getPassword())) // Mã hóa mật khẩu
                 .fullName(userDTO.getFullName())
                 .avatarUrl(DEFAULT_AVATAR_URL)
+                .enabled(false)
                 .build();
         // Gán quyền ROLE_USER cho người dùng
         Role userRole = roleRepository.findByRoleName(RoleName.ROLE_USER)
@@ -61,8 +72,19 @@ public class UserService {
         Set<Role> roles = new HashSet<>();
         roles.add(userRole);
         user.setRoles(roles);
-        // Lưu vào cơ sở dữ liệu
-        return userRepository.save(user);
+        // Lưu người dùng vào cơ sở dữ liệu
+        User savedUser = userRepository.save(user);
+
+        // Tạo mã xác thực
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken(token, savedUser);
+        tokenRepository.save(verificationToken);
+
+        // Gửi email xác thực
+        emailService.sendVerificationEmail(savedUser.getEmail(), token);
+
+        // Chuyển đổi User sang UserDTO và trả về
+        return convertToDTO(savedUser);
     }
     // Phương thức chuyển đổi User thành UserDTO
     public UserDTO convertToDTO(User user) {
@@ -106,5 +128,24 @@ public class UserService {
 
         // Chuyển đổi User sang UserDTO
         return convertToDTO(user);
+    }
+
+    // Phương thức kích hoạt tài khoản khi người dùng xác thực email
+    @Transactional
+    public String verifyAccount(String token) {
+        VerificationToken verificationToken = tokenRepository.findByToken(token);
+        if (verificationToken == null) {
+            return "Invalid token.";
+        }
+
+        User user = verificationToken.getUser();
+        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            return "Token expired.";
+        }
+
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        return "Account verified successfully!";
     }
 }

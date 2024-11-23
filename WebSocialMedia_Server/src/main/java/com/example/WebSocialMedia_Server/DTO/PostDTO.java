@@ -15,8 +15,7 @@ public class PostDTO {
     private LocalDateTime updatedAt;
     private List<MediaDTO> mediaList;
     private int commentCount;
-    // Thêm các trường cho thông tin chia sẻ
-    private UserDTO sharedBy;          // Người chia sẻ
-    private LocalDateTime sharedAt;    // Thời gian chia sẻ
-    private String shareComment;       // Bình luận khi chia sẻ (nếu có)
+    private UserDTO sharedBy;
+    private LocalDateTime sharedAt;
+    private String shareComment;
 }

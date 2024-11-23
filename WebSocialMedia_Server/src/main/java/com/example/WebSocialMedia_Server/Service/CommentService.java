@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,6 +98,20 @@ public class CommentService {
     public int countCommentsByPostId(Long postId) {
         return commentRepository.countByPostId(postId);
     }
+    // Sửa bình luan
+    @Transactional
+    public Comment updateComment(Long commentId, String updatedContent, String username) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-    // Các phương thức khác (xoá, sửa bình luận) nếu cần
+        // Kiểm tra quyền chỉnh sửa
+        if (!comment.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("You are not authorized to edit this comment");
+        }
+
+        // Cập nhật nội dung bình luận
+        comment.setContent(updatedContent);
+        comment.setUpdatedAt(LocalDateTime.now());
+        return commentRepository.save(comment);
+    }
 }

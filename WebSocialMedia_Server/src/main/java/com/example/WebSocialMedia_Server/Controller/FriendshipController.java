@@ -2,8 +2,6 @@ package com.example.WebSocialMedia_Server.Controller;
 
 import com.example.WebSocialMedia_Server.DTO.FriendshipDTO;
 import com.example.WebSocialMedia_Server.DTO.UserDTO;
-import com.example.WebSocialMedia_Server.Entity.Friendship;
-import com.example.WebSocialMedia_Server.Entity.User;
 import com.example.WebSocialMedia_Server.Service.FriendshipService;
 import com.example.WebSocialMedia_Server.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

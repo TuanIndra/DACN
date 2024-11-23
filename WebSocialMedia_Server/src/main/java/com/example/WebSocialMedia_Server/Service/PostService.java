@@ -49,6 +49,7 @@ public class PostService {
     private String uploadDir;
 
     @Transactional
+    //tạo bài dang
     public Post createPost(PostDTO postDTO, List<MultipartFile> files, String username) {
         // Lấy thông tin người dùng từ username
         User user = userRepository.findByUsername(username)
@@ -223,6 +224,21 @@ public class PostService {
         }
     }
 
+    @Transactional
+    public void deletePost(Long postId, String username) {
+        // Tìm bài viết theo ID
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Kiểm tra xem người dùng hiện tại có phải là chủ bài viết không
+        if (!post.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("You are not authorized to delete this post");
+        }
+
+        // Xóa bài viết
+        postRepository.delete(post);
+    }
+
     // Phương thức chuyển đổi Post sang PostDTO
     public PostDTO convertToDTO(Post post) {
         PostDTO postDTO = new PostDTO();
@@ -254,6 +270,23 @@ public class PostService {
         int commentCount = commentRepository.countByPostId(post.getId());
         postDTO.setCommentCount(commentCount);
         return postDTO;
+    }
+
+    //Phương thức chỉnh sửa bài viết
+    @Transactional
+    public Post updatePost(Long postId, String updatedContent, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Kiểm tra quyền chỉnh sửa
+        if (!post.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("You are not authorized to edit this post");
+        }
+
+        // Cập nhật nội dung bài viết
+        post.setContent(updatedContent);
+        post.setUpdatedAt(LocalDateTime.now());
+        return postRepository.save(post);
     }
 }
 

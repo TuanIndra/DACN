@@ -6,13 +6,11 @@ import com.example.WebSocialMedia_Server.Service.PostService;
 import com.example.WebSocialMedia_Server.Service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,6 +67,32 @@ public class PostController {
         List<PostDTO> newsFeedPosts = postService.getNewsFeed(userId);
         return ResponseEntity.ok(newsFeedPosts);
     }
+    // xóa bài viet
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<String> deletePost(@PathVariable Long postId, Authentication authentication) {
+        String username = authentication.getName();
 
+        try {
+            postService.deletePost(postId, username);
+            return ResponseEntity.ok("Post deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+    //Sửa bài viêt
+    @PutMapping("/{postId}")
+    public ResponseEntity<PostDTO> updatePost(
+            @PathVariable Long postId,
+            @RequestBody String updatedContent,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        Post updatedPost = postService.updatePost(postId, updatedContent, username);
+
+        // Chuyển đổi `Post` sang `PostDTO` (giả sử đã có convertToDTO trong PostService)
+        PostDTO postDTO = postService.convertToDTO(updatedPost);
+
+        return ResponseEntity.ok(postDTO);
+    }
 }
 

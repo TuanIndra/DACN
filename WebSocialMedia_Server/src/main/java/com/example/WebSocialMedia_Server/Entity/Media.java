@@ -36,7 +36,4 @@ public class Media {
     @Column(name = "uploaded_at", updatable = false)
     private LocalDateTime uploadedAt;
 
-    public MediaType getType() {
-        return type;
-    }
 }

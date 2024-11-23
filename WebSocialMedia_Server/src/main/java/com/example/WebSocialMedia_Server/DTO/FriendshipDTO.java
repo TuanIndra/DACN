@@ -9,5 +9,4 @@ public class FriendshipDTO {
     private UserDTO requester;
     private UserDTO addressee;
     private FriendshipStatus status;
-
 }

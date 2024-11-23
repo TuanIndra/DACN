@@ -38,13 +38,4 @@ public class VerificationToken {
     private LocalDateTime calculateExpiryDate(int expiryTimeInMinutes) {
         return LocalDateTime.now().plusMinutes(expiryTimeInMinutes);
     }
-
-
-//    public User getUser() {
-//        return user;
-//    }
-//
-//    public LocalDateTime getExpiryDate() {
-//        return expiryDate;
-//    }
 }

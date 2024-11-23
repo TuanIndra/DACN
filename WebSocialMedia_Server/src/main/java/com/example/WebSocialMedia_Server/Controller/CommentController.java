@@ -1,6 +1,7 @@
 package com.example.WebSocialMedia_Server.Controller;
 
 import com.example.WebSocialMedia_Server.DTO.CommentDTO;
+import com.example.WebSocialMedia_Server.Entity.Comment;
 import com.example.WebSocialMedia_Server.Service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -52,5 +53,19 @@ public class CommentController {
         int count = commentService.countCommentsByPostId(postId);
         return ResponseEntity.ok(count);
     }
-    // Các endpoint khác (xoá, sửa bình luận) nếu cần
+    //sua comment
+    @PutMapping("/{commentId}")
+    public ResponseEntity<CommentDTO> updateComment(
+            @PathVariable Long commentId,
+            @RequestBody String updatedContent,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        Comment updatedComment = commentService.updateComment(commentId, updatedContent, username);
+
+        // Chuyển đổi `Comment` sang `CommentDTO` (giả sử đã có convertToDTO trong CommentService)
+        CommentDTO commentDTO = commentService.convertToDTO(updatedComment);
+
+        return ResponseEntity.ok(commentDTO);
+    }
 }

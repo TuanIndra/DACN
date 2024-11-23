@@ -8,13 +8,13 @@ import java.util.List;
 @Data
 public class CommentDTO {
     private Long id;
-    private Long postId;        // ID của bài viết
-    private Long userId;        // ID của người dùng bình luận
-    private String username;    // Tên người dùng
+    private Long postId;
+    private Long userId;
+    private String username;
     private String fullName;
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<CommentDTO> replies;  // Danh sách phản hồi (nếu có)
+    private List<CommentDTO> replies;
 }
 

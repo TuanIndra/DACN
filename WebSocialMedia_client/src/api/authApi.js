@@ -3,17 +3,16 @@
 import axiosInstance from '../utils/axiosConfig';
 
 // Hàm đăng nhập
-export const login = (username, password) => {
-  return axiosInstance.post('/api/auth/login', { username, password });
+export const login = (usernameOrEmail, password) => {
+  return axiosInstance.post('/api/auth/login', { usernameOrEmail, password });
 };
 // Hàm đăng ký
-export const register = async (fullName, username, email, password, avatarUrl) => {
-  const response = await axios.post('/api/auth/register', {
+export const register = (fullName, username, email, password) => {
+  return axiosInstance.post('/api/auth/register', {
     fullName,
     username,
     email,
     password,
-    avatarUrl, // Gửi kèm avatarUrl
   });
   return response;
 };

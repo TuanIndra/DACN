@@ -26,6 +26,11 @@ const PostsList = ({ onPostClick }) => {
     getPosts();
   }, []);
 
+  const isVideo = (url) => {
+    const videoExtensions = ['.mp4', '.webm', '.ogg'];
+    return videoExtensions.some((ext) => url.endsWith(ext));
+  };
+
   if (loading) return <p className="dark:text-white">Đang tải...</p>;
   if (error) return <p className="dark:text-red-400">{error}</p>;
 
@@ -69,12 +74,20 @@ const PostsList = ({ onPostClick }) => {
                   {post.mediaList.slice(0, 4).map((media, index) => (
                     <div key={media.id} className="relative">
                       <div className="w-full h-[150px] md:h-[200px] overflow-hidden rounded">
-                        <img
-                          src={`http://localhost:8082/uploads/${media.url}`}
-                          alt={`Media ${index + 1}`}
-                          className="w-full h-full object-cover cursor-pointer"
-                          onClick={() => onPostClick(post, index)} // Truyền index ảnh hiện tại
-                        />
+                        {isVideo(media.url) ? (
+                          <video
+                            controls
+                            src={`http://localhost:8082/uploads/${media.url}`}
+                            className="w-full h-full object-cover cursor-pointer"
+                          />
+                        ) : (
+                          <img
+                            src={`http://localhost:8082/uploads/${media.url}`}
+                            alt={`Media ${index + 1}`}
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => onPostClick(post, index)} // Truyền index ảnh hiện tại
+                          />
+                        )}
                         {index === 3 && post.mediaList.length > 4 && (
                           <div
                             className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-xl font-bold"
@@ -88,15 +101,25 @@ const PostsList = ({ onPostClick }) => {
                   ))}
                 </div>
               ) : (
-                post.mediaList.map((media, index) => (
-                  <img
-                    key={media.id}
-                    src={`http://localhost:8082/uploads/${media.url}`}
-                    alt={`Media ${index + 1}`}
-                    className="w-full rounded mb-2 cursor-pointer"
-                    onClick={() => onPostClick(post, index)} // Truyền index ảnh hiện tại
-                  />
-                ))
+                post.mediaList.map((media, index) =>
+                  isVideo(media.url) ? (
+                    <video
+                      key={media.id}
+                      controls
+                      src={`http://localhost:8082/uploads/${media.url}`}
+                      className="w-full rounded mb-2 cursor-pointer"
+                      onClick={() => onPostClick(post, index)} // Truyền index ảnh hiện tại
+                    />
+                  ) : (
+                    <img
+                      key={media.id}
+                      src={`http://localhost:8082/uploads/${media.url}`}
+                      alt={`Media ${index + 1}`}
+                      className="w-full rounded mb-2 cursor-pointer"
+                      onClick={() => onPostClick(post, index)} // Truyền index ảnh hiện tại
+                    />
+                  )
+                )
               )}
             </>
           )}
@@ -104,7 +127,7 @@ const PostsList = ({ onPostClick }) => {
           {/* Các thông tin khác */}
           <div className="flex items-center mt-2 text-gray-500 dark:text-gray-400">
             <span className="mr-4">{post.reactions?.length || 0} Thích</span>
-            <span className="mr-4">{post.comments?.length || 0} Bình luận</span>
+            <span className="mr-4">{post.commentCount || 0} Bình luận</span>
             <span>{post.shares?.length || 0} Chia sẻ</span>
           </div>
         </div>

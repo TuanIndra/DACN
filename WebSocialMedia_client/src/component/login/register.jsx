@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register } from '../../api/authApi'; // Import hàm register từ authApi.js
+import { register } from '../../api/authApi'; // Import the register API function
 import logo from "../../assets/logo.jpg";
-import defaultAvatar from "../../assets/default-avatar.png"; // Import avatar mặc định
 
 const Register = () => {
   const [fullName, setFullName] = useState('');
@@ -17,30 +16,44 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Clear previous messages
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    // Validate password and confirmation
     if (password !== confirmPassword) {
       setErrorMessage('Mật khẩu và xác nhận mật khẩu không khớp!');
       return;
     }
 
     try {
-      // Thêm avatarUrl mặc định
-      const avatarUrl = "assets/default-avatar.png"; // Đường dẫn tĩnh tới avatar mặc định
-      
-      const response = await register(fullName, username, email, password, avatarUrl);
+      const response = await register(fullName, username, email, password);
 
-      setSuccessMessage('Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.');
-      setErrorMessage('');
-
+      // On successful registration
+      setSuccessMessage('Đăng ký thành công! Vui lòng xác thực email của bạn.');
       setTimeout(() => {
-        navigate('/');
-      }, 2000);
+        navigate('/'); // Redirect to login page
+      }, 3000); // Wait for 3 seconds before redirecting
     } catch (error) {
+      // Handle errors returned by the backend or network issues
       if (error.response) {
-        setErrorMessage(error.response.data.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.');
-      } else {
+        // Backend returned an error response
+        if (error.response.data.message) {
+          setErrorMessage(error.response.data.message);
+        } else if (error.response.data.errors) {
+          // If backend provides specific validation errors
+          const errors = error.response.data.errors;
+          setErrorMessage(errors.join(' '));
+        } else {
+          setErrorMessage('Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.');
+        }
+      } else if (error.request) {
+        // Network error or no response received
         setErrorMessage('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
+      } else {
+        // Unexpected error
+        setErrorMessage('Đã xảy ra lỗi. Vui lòng thử lại.');
       }
-      setSuccessMessage('');
     }
   };
 
@@ -52,34 +65,29 @@ const Register = () => {
         <span className="text-3xl font-bold text-primary ml-3">ᴄᴀᴘʏᴊᴏʏ</span>
       </div>
 
-      {/* Register Form */}
+      {/* Registration Form */}
       <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center mb-6 dark:text-white">Đăng Ký</h2>
-        
-        {errorMessage && (
-          <p className="text-red-500 text-center mb-4">{errorMessage}</p>
-        )}
 
-        {successMessage && (
-          <p className="text-green-500 text-center mb-4">{successMessage}</p>
-        )}
+        {errorMessage && <p className="text-red-500 text-center mb-4">{errorMessage}</p>}
+        {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
 
         <form onSubmit={handleSubmit}>
-          {/* Full Name Input */}
+          {/* Full Name */}
           <div className="mb-4">
-            <label htmlFor="fullName" className="block text-gray-700 dark:text-gray-300">Tên người dùng</label>
+            <label htmlFor="fullName" className="block text-gray-700 dark:text-gray-300">Tên đầy đủ</label>
             <input
               type="text"
               id="fullName"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:text-white"
               placeholder="Nhập tên đầy đủ của bạn"
               required
             />
           </div>
 
-          {/* Username Input */}
+          {/* Username */}
           <div className="mb-4">
             <label htmlFor="username" className="block text-gray-700 dark:text-gray-300">Tên đăng nhập</label>
             <input
@@ -87,13 +95,13 @@ const Register = () => {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:text-white"
               placeholder="Nhập tên đăng nhập của bạn"
               required
             />
           </div>
 
-          {/* Email Input */}
+          {/* Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 dark:text-gray-300">Email</label>
             <input
@@ -101,13 +109,13 @@ const Register = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:text-white"
               placeholder="Nhập email của bạn"
               required
             />
           </div>
 
-          {/* Password Input */}
+          {/* Password */}
           <div className="mb-4">
             <label htmlFor="password" className="block text-gray-700 dark:text-gray-300">Mật khẩu</label>
             <input
@@ -115,13 +123,13 @@ const Register = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:text-white"
               placeholder="Nhập mật khẩu của bạn"
               required
             />
           </div>
 
-          {/* Confirm Password Input */}
+          {/* Confirm Password */}
           <div className="mb-4">
             <label htmlFor="confirmPassword" className="block text-gray-700 dark:text-gray-300">Xác nhận mật khẩu</label>
             <input
@@ -129,16 +137,15 @@ const Register = () => {
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-gray-700 dark:text-white"
-              placeholder="Xác nhận mật khẩu của bạn"
+              className="w-full px-4 py-2 mt-2 border rounded-lg dark:bg-gray-700 dark:text-white"
+              placeholder="Nhập lại mật khẩu"
               required
             />
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary/80 transition"
+            className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary/80"
           >
             Đăng Ký
           </button>

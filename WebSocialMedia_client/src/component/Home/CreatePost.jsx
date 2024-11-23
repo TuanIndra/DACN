@@ -13,7 +13,7 @@ const CreatePost = ({ onPostCreated }) => {
     e.preventDefault();
 
     if (!content.trim() && files.length === 0) {
-      setError('Nội dung bài viết hoặc ảnh không được để trống');
+      setError('Nội dung bài viết hoặc tệp đính kèm không được để trống');
       return;
     }
 
@@ -44,14 +44,22 @@ const CreatePost = ({ onPostCreated }) => {
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    const imageFiles = selectedFiles.filter((file) => file.type.startsWith('image/'));
-    setFiles((prevFiles) => [...prevFiles, ...imageFiles]);
-    const newPreviewUrls = imageFiles.map((file) => URL.createObjectURL(file));
+    const validFiles = selectedFiles.filter((file) =>
+      ['image/', 'video/'].some((type) => file.type.startsWith(type))
+    );
+
+    setFiles((prevFiles) => [...prevFiles, ...validFiles]);
+
+    const newPreviewUrls = validFiles.map((file) =>
+      file.type.startsWith('image/')
+        ? { type: 'image', url: URL.createObjectURL(file) }
+        : { type: 'video', url: URL.createObjectURL(file) }
+    );
     setPreviewUrls((prevUrls) => [...prevUrls, ...newPreviewUrls]);
   };
 
   const removePreview = (index) => {
-    URL.revokeObjectURL(previewUrls[index]);
+    URL.revokeObjectURL(previewUrls[index].url);
     const updatedFiles = [...files];
     const updatedPreviews = [...previewUrls];
     updatedFiles.splice(index, 1);
@@ -61,10 +69,10 @@ const CreatePost = ({ onPostCreated }) => {
   };
 
   return (
-    <div className="bg-white shadow-md rounded p-4 mb-4">
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded p-4 mb-4">
       <form onSubmit={handleSubmit}>
         <textarea
-          className="w-full h-full p-2 border rounded mb-2"
+          className="w-full h-full p-2 border rounded mb-2 dark:bg-gray-700 dark:text-white"
           placeholder="Bạn đang nghĩ gì?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -76,20 +84,30 @@ const CreatePost = ({ onPostCreated }) => {
           onChange={handleFileChange}
           className="mb-2"
           multiple
-          accept="image/*"
+          accept="image/*,video/*"
         />
 
         {previewUrls.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-sm font-medium mb-4 text-primary">Ảnh xem trước:</h3>
+            <h3 className="text-sm font-medium mb-4 text-primary dark:text-secondary">
+              Xem trước:
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {previewUrls.map((url, index) => (
+              {previewUrls.map((preview, index) => (
                 <div key={index} className="relative">
-                  <img
-                    src={url}
-                    alt={`Preview ${index}`}
-                    className="w-full h-auto max-h-[400px] object-contain rounded"
-                  />
+                  {preview.type === 'image' ? (
+                    <img
+                      src={preview.url}
+                      alt={`Preview ${index}`}
+                      className="w-full h-auto max-h-[400px] object-contain rounded"
+                    />
+                  ) : (
+                    <video
+                      src={preview.url}
+                      controls
+                      className="w-full h-auto max-h-[400px] object-contain rounded"
+                    />
+                  )}
                   <button
                     type="button"
                     className="absolute top-1 right-1 bg-primary text-white rounded-full p-1 text-xs"
@@ -104,13 +122,7 @@ const CreatePost = ({ onPostCreated }) => {
         )}
 
         <div className="flex justify-between">
-          <button
-            type="button"
-            className="bg-secondary text-black py-2 px-4 rounded hover:bg-secondary/80 transition"
-            onClick={() => navigate('/')} // Quay về trang chủ
-          >
-           
-          </button>
+ 
           <button
             type="submit"
             className="bg-primary text-white py-2 px-4 rounded hover:bg-primary/80 transition"

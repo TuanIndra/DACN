@@ -16,15 +16,15 @@ export const createPost = (formData) => {
 
 // Lấy chi tiết bài viết
 export const getPostById = (postId) => {
-  return axiosInstance.get(`/api/posts${postId}`);
+  return axiosInstance.get(`/api/posts/${postId}`); // Thêm dấu `/` trước postId
 };
 
 // Cập nhật bài viết
 export const updatePost = (postId, updatedContent) => {
-  return axiosInstance.put(`/api/posts${postId}`, { content: updatedContent });
+  return axiosInstance.put(`/api/posts/${postId}`, { content: updatedContent }); // Thêm dấu `/` trước postId
 };
 
 // Xóa bài viết
 export const deletePost = (postId) => {
-  return axiosInstance.delete(`/api/posts${postId}`);
+  return axiosInstance.delete(`/api/posts/${postId}`); // Thêm dấu `/` trước postId
 };

@@ -1,35 +1,37 @@
+// src/pages/Profile/Profile.jsx
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchUserProfile, fetchUserPosts } from '../../api/profileApi';
+import { fetchUserProfile } from '../../api/profileApi';
 import Navbar from '../../component/Navbar/Navbar';
+import PostsList from '../../component/Home/PostsList';
 import CreatePost from '../../component/Home/CreatePost';
+import FriendRequestButton from '../../component/Friend/FriendRequestButton';
 
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
 
-  
   const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [activeTab, setActiveTab] = useState('posts');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const loggedInUserId = Number(localStorage.getItem('userId'));
   const currentUserId = Number(userId);
-  
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
 
-        const [profileResponse, postsResponse] = await Promise.all([
-          fetchUserProfile(userId),
-          fetchUserPosts(userId),
-        ]);
-
+        const profileResponse = await fetchUserProfile(userId);
         setProfile(profileResponse.data);
-        setPosts(postsResponse.data);
+
+        // Nếu cần, bạn có thể tải danh sách bạn bè của người dùng
+        // const friendsResponse = await fetchUserFriends(userId);
+        // setFriends(friendsResponse.data);
       } catch (err) {
         console.error('Error fetching profile data:', err);
         setError('Không thể tải thông tin người dùng');
@@ -41,85 +43,41 @@ const Profile = () => {
     fetchProfileData();
   }, [userId]);
 
-  const isVideo = (url) => {
-    const videoExtensions = ['.mp4', '.webm', '.ogg'];
-    return videoExtensions.some((ext) => url.endsWith(ext));
-  };
-
-  const renderMedia = (mediaList) => {
-    if (mediaList.length > 5) {
+  const renderTabContent = () => {
+    if (activeTab === 'posts') {
       return (
-        <div className="grid grid-cols-3 gap-2 mt-2">
-          {mediaList.slice(0, 5).map((media, index) =>
-            isVideo(media.url) ? (
-              <video
-                key={index}
-                controls
-                src={`http://localhost:8082/uploads/${media.url}`}
-                className="w-full rounded"
-              />
-            ) : (
+        <PostsList
+          userId={currentUserId}
+          onPostClick={(post, index) =>
+            navigate(`/post/${post.id}`, { state: { post, currentImageIndex: index } })
+          }
+        />
+      );
+    } else if (activeTab === 'friends') {
+      if (friends.length === 0) {
+        return (
+          <p className="text-center text-gray-500 dark:text-gray-400">Không tìm thấy bạn bè nào.</p>
+        );
+      }
+      return (
+        <div className="grid grid-cols-3 gap-4">
+          {friends.map((friend) => (
+            <div key={friend.id} className="text-center">
               <img
-                key={index}
-                src={`http://localhost:8082/uploads/${media.url}`}
-                alt={`Media ${index + 1}`}
-                className="w-full rounded"
+                src={
+                  friend.avatarUrl
+                    ? `http://localhost:8082/uploads/${friend.avatarUrl}`
+                    : `http://localhost:8082/uploads/default-avatar.png`
+                }
+                alt={friend.fullName || 'User'}
+                className="w-16 h-16 rounded-full mx-auto"
               />
-            )
-          )}
-          <div className="relative">
-            <div
-              className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-lg font-bold"
-              onClick={() => console.log('Show all media')}
-            >
-              +{mediaList.length - 5}
+              <p className="mt-2 dark:text-white">{friend.fullName}</p>
             </div>
-          </div>
+          ))}
         </div>
       );
     }
-
-    if (mediaList.length > 2) {
-      return (
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {mediaList.map((media, index) =>
-            isVideo(media.url) ? (
-              <video
-                key={index}
-                controls
-                src={`http://localhost:8082/uploads/${media.url}`}
-                className="w-full rounded"
-              />
-            ) : (
-              <img
-                key={index}
-                src={`http://localhost:8082/uploads/${media.url}`}
-                alt={`Media ${index + 1}`}
-                className="w-full rounded"
-              />
-            )
-          )}
-        </div>
-      );
-    }
-
-    return mediaList.map((media, index) =>
-      isVideo(media.url) ? (
-        <video
-          key={index}
-          controls
-          src={`http://localhost:8082/uploads/${media.url}`}
-          className="w-full rounded mt-2"
-        />
-      ) : (
-        <img
-          key={index}
-          src={`http://localhost:8082/uploads/${media.url}`}
-          alt={`Media ${index + 1}`}
-          className="w-full rounded mt-2"
-        />
-      )
-    );
   };
 
   if (loading) return <p className="text-gray-500 dark:text-gray-400">Đang tải...</p>;
@@ -127,86 +85,61 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Navbar */}
       <Navbar />
-
-      {/* Main Content */}
       <div className="flex flex-col items-center mt-4">
-        {/* Profile Section */}
         <div className="bg-white dark:bg-gray-800 shadow-md rounded p-4 w-full max-w-4xl mb-6">
           {profile && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <img
-                  src={
-                    profile.avatarUrl
-                      ? `http://localhost:8082/uploads/${profile.avatarUrl}`
-                      : `http://localhost:8082/uploads/default-avatar.png`
-                  }
-                  alt={profile.fullName || 'User'}
-                  className="w-20 h-20 rounded-full mr-4"
-                />
-                <div>
-                  <h1 className="text-2xl font-bold dark:text-white">{profile.fullName}</h1>
-                  <p className="text-gray-500 dark:text-gray-400">@{profile.username}</p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {profile.bio || 'Không có thông tin giới thiệu'}
-                  </p>
-                </div>
+            <div className="flex flex-col items-center">
+              <img
+                src={
+                  profile.avatarUrl && !profile.avatarUrl.startsWith('http')
+                    ? `http://localhost:8082/uploads/${profile.avatarUrl}`
+                    : profile.avatarUrl || `http://localhost:8082/uploads/default-avatar.png`
+                }
+                alt={profile.fullName || 'User'}
+                className="w-32 h-32 rounded-full mb-4"
+              />
+              <div className="text-center">
+                <h1 className="text-3xl font-bold dark:text-white">{profile.fullName}</h1>
+                <p className="text-gray-500 dark:text-gray-400">@{profile.username}</p>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {profile.bio || 'Không có thông tin giới thiệu'}
+                </p>
               </div>
-              {loggedInUserId !== currentUserId && (
-  <button className="bg-primary text-white px-4 py-2 rounded">Thêm bạn bè</button>
-)}
+
+              {/* Sử dụng component FriendRequestButton */}
+              <FriendRequestButton currentUserId={currentUserId} />
             </div>
           )}
+
+          {/* Tabs */}
+          <div className="flex justify-around mt-6">
+            <button
+              className={`px-4 py-2 ${
+                activeTab === 'posts' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('posts')}
+            >
+              Bài viết
+            </button>
+            <button
+              className={`px-4 py-2 ${
+                activeTab === 'friends' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('friends')}
+            >
+              Bạn bè
+            </button>
+          </div>
         </div>
 
-        {/* Create Post Section */}
-        {loggedInUserId === userId && (
+        {activeTab === 'posts' && loggedInUserId === currentUserId && (
           <div className="bg-white dark:bg-gray-800 shadow-md rounded p-4 w-full max-w-4xl mb-6">
             <CreatePost />
           </div>
         )}
 
-        {/* Posts Section */}
-        <div className="w-full max-w-4xl">
-          {posts.map((post) => (
-            <div key={post.id} className="bg-white dark:bg-gray-800 shadow-md rounded p-4 mb-4">
-              {/* User Info */}
-              <div className="flex items-center mb-2">
-                <img
-                  src={
-                    post.user?.avatarUrl
-                      ? `http://localhost:8082/uploads/${post.user.avatarUrl}`
-                      : `http://localhost:8082/uploads/default-avatar.png`
-                  }
-                  alt={post.user?.fullName || 'User'}
-                  className="w-10 h-10 rounded-full mr-3 cursor-pointer"
-                  onClick={() => navigate(`/profile/${post.user?.id}`)}
-                />
-                <div>
-                  <h3 className="font-bold dark:text-white">{post.user?.fullName || 'Người dùng'}</h3>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(post.createdAt).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Post Content */}
-              <p className="dark:text-gray-300">{post.content}</p>
-
-              {/* Media */}
-              {post.mediaList && post.mediaList.length > 0 && renderMedia(post.mediaList)}
-
-              {/* Post Details */}
-              <div className="flex items-center mt-2 text-gray-500 dark:text-gray-400">
-                <span className="mr-4">{post.reactions?.length || 0} Thích</span>
-                <span className="mr-4">{post.commentCount || 0} Bình luận</span>
-                <span>{post.shares?.length || 0} Chia sẻ</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <div className="w-full max-w-4xl">{renderTabContent()}</div>
       </div>
     </div>
   );

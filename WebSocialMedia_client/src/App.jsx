@@ -4,6 +4,7 @@ import Login from './component/login/login';
 import Homepage from './component/Home/homePage';
 import Register from './component/login/register';
 import PostDetail from './component/Home/PostDetail';
+import FriendsPage from './component/Friend/FriendsPage';
 import Profile from'./component/Profile/profile';
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
         <Route path="/register" element={<Register/>}/>
         <Route path="/post/:id" element={<PostDetail />} /> {/* Thêm route */}
         <Route path="/profile/:userId" element={<Profile />} />
+        <Route path="/friends" element={<FriendsPage />} />
 
       </Routes>
     </Router>

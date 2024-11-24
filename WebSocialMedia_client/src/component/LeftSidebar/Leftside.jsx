@@ -17,7 +17,7 @@ const Leftside = () => {
     <div className="fixed w-[20%] flex-col pb-4 border-2 rounded-r-xl shadow-md h-screen bg-primary/30 dark:bg-gray-900 dark:text-white shadow-lg">
       <div>
         <NavLink href="/homepage" imgSrc={avatar} altText="avatar" label="Home" />
-        <NavLink href="#" imgSrc={friend} altText="friend" label="Friends" />
+        <NavLink href="/friends" imgSrc={friend} altText="friend" label="Friends" />
         <NavLink href="#" imgSrc={group} altText="group" label="Groups" />
       </div>
     </div>

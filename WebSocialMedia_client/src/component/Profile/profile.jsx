@@ -1,8 +1,7 @@
-// src/pages/Profile/Profile.jsx
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchUserProfile } from '../../api/profileApi';
+import { fetchAcceptedFriends } from '../../api/friendshipApi';
 import Navbar from '../../component/Navbar/Navbar';
 import PostsList from '../../component/Home/PostsList';
 import CreatePost from '../../component/Home/CreatePost';
@@ -18,7 +17,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loggedInUserId = Number(localStorage.getItem('userId'));
   const currentUserId = Number(userId);
 
   useEffect(() => {
@@ -28,10 +26,6 @@ const Profile = () => {
 
         const profileResponse = await fetchUserProfile(userId);
         setProfile(profileResponse.data);
-
-        // Nếu cần, bạn có thể tải danh sách bạn bè của người dùng
-        // const friendsResponse = await fetchUserFriends(userId);
-        // setFriends(friendsResponse.data);
       } catch (err) {
         console.error('Error fetching profile data:', err);
         setError('Không thể tải thông tin người dùng');
@@ -42,6 +36,34 @@ const Profile = () => {
 
     fetchProfileData();
   }, [userId]);
+
+  useEffect(() => {
+    if (activeTab === 'friends') {
+      const fetchFriends = async () => {
+        try {
+          const friendsResponse = await fetchAcceptedFriends(currentUserId);
+          setFriends(friendsResponse.data || []);
+        } catch (error) {
+          console.error('Error fetching friends:', error);
+          setFriends([]);
+        }
+      };
+
+      fetchFriends();
+    }
+  }, [activeTab, currentUserId]);
+
+  const getAvatarUrl = (avatarUrl) => {
+    if (avatarUrl) {
+      if (avatarUrl.startsWith('http')) {
+        return avatarUrl;
+      } else {
+        return `http://localhost:8082/uploads/${avatarUrl}`;
+      }
+    } else {
+      return '/default-avatar.png';
+    }
+  };
 
   const renderTabContent = () => {
     if (activeTab === 'posts') {
@@ -60,19 +82,17 @@ const Profile = () => {
         );
       }
       return (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {friends.map((friend) => (
-            <div key={friend.id} className="text-center">
+            <div key={friend.id} className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center">
               <img
-                src={
-                  friend.avatarUrl
-                    ? `http://localhost:8082/uploads/${friend.avatarUrl}`
-                    : `http://localhost:8082/uploads/default-avatar.png`
-                }
-                alt={friend.fullName || 'User'}
-                className="w-16 h-16 rounded-full mx-auto"
+                src={getAvatarUrl(friend.avatarUrl)}
+                alt={friend.fullName || 'Người dùng'}
+                className="w-12 h-12 rounded-full mx-auto object-cover"
               />
-              <p className="mt-2 dark:text-white">{friend.fullName}</p>
+              <h3 className="mt-2 text-center text-gray-800 dark:text-gray-200">
+                {friend.fullName || 'Ẩn danh'}
+              </h3>
             </div>
           ))}
         </div>
@@ -91,11 +111,7 @@ const Profile = () => {
           {profile && (
             <div className="flex flex-col items-center">
               <img
-                src={
-                  profile.avatarUrl && !profile.avatarUrl.startsWith('http')
-                    ? `http://localhost:8082/uploads/${profile.avatarUrl}`
-                    : profile.avatarUrl || `http://localhost:8082/uploads/default-avatar.png`
-                }
+                src={getAvatarUrl(profile.avatarUrl)}
                 alt={profile.fullName || 'User'}
                 className="w-32 h-32 rounded-full mb-4"
               />
@@ -107,7 +123,6 @@ const Profile = () => {
                 </p>
               </div>
 
-              {/* Sử dụng component FriendRequestButton */}
               <FriendRequestButton currentUserId={currentUserId} />
             </div>
           )}
@@ -132,12 +147,6 @@ const Profile = () => {
             </button>
           </div>
         </div>
-
-        {activeTab === 'posts' && loggedInUserId === currentUserId && (
-          <div className="bg-white dark:bg-gray-800 shadow-md rounded p-4 w-full max-w-4xl mb-6">
-            <CreatePost />
-          </div>
-        )}
 
         <div className="w-full max-w-4xl">{renderTabContent()}</div>
       </div>

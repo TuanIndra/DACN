@@ -18,10 +18,9 @@ const FriendsPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         const pendingResponse = await fetchPendingReceivedRequests();
+        console.log('Pending Requests:', pendingResponse.data); // Check the data structure
         setPendingRequests(pendingResponse.data || []);
-
         const friendsResponse = await fetchAcceptedFriends();
         setFriends(friendsResponse.data || []);
       } catch (error) {
@@ -34,27 +33,32 @@ const FriendsPage = () => {
     fetchData();
   }, []);
 
-  // Hàm helper để lấy URL ảnh đại diện
+  // Reset selected user when switching tabs
+  useEffect(() => {
+    setSelectedUser(null);
+  }, [activeTab]);
+
   const getAvatarUrl = (avatarUrl) => {
     if (avatarUrl) {
-      if (avatarUrl.startsWith('http')) {
-        return avatarUrl;
-      } else {
-        return `http://localhost:8082/uploads/${avatarUrl}`;
-      }
-    } else {
-      return '/default-avatar.png';
+      return avatarUrl.startsWith('http')
+        ? avatarUrl
+        : `http://localhost:8082/uploads/${avatarUrl}`;
     }
+    return '/default-avatar.png';
   };
 
   const handleAcceptRequest = async (friendshipId) => {
     try {
       await acceptFriendRequest(friendshipId);
-      const acceptedRequest = pendingRequests.find((request) => request.id === friendshipId);
-      if (acceptedRequest && acceptedRequest.sender) {
-        setFriends((prev) => [...prev, acceptedRequest.sender]);
+      const acceptedRequest = pendingRequests.find(
+        (request) => request.id === friendshipId
+      );
+      if (acceptedRequest && acceptedRequest.requester) {
+        setFriends((prev) => [...prev, acceptedRequest.requester]);
       }
-      setPendingRequests((prev) => prev.filter((request) => request.id !== friendshipId));
+      setPendingRequests((prev) =>
+        prev.filter((request) => request.id !== friendshipId)
+      );
     } catch (error) {
       console.error('Error accepting friend request:', error);
     }
@@ -63,13 +67,15 @@ const FriendsPage = () => {
   const handleDeclineRequest = async (friendshipId) => {
     try {
       await cancelFriendRequest(friendshipId);
-      setPendingRequests((prev) => prev.filter((request) => request.id !== friendshipId));
+      setPendingRequests((prev) =>
+        prev.filter((request) => request.id !== friendshipId)
+      );
     } catch (error) {
       console.error('Error declining friend request:', error);
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Navbar />
@@ -78,6 +84,7 @@ const FriendsPage = () => {
         </div>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -123,18 +130,28 @@ const FriendsPage = () => {
                   {pendingRequests.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center cursor-pointer"
-                      onClick={() => setSelectedUser(request.sender)}
+                      className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center"
                     >
-                      {request.sender && (
+                      {request.requester ? (
                         <>
                           <img
-                            src={getAvatarUrl(request.sender.avatarUrl)}
-                            alt={request.sender.fullName || 'Người dùng'}
+                            src={getAvatarUrl(request.requester.avatarUrl)}
+                            alt={request.requester.fullName || 'Người dùng'}
                             className="w-12 h-12 rounded-full mx-auto object-cover"
                           />
                           <h3 className="mt-2 text-center text-gray-800 dark:text-gray-200">
-                            {request.sender.fullName || 'Ẩn danh'}
+                            {request.requester.fullName || 'Ẩn danh'}
+                          </h3>
+                        </>
+                      ) : (
+                        <>
+                          <img
+                            src="/default-avatar.png"
+                            alt="Người dùng"
+                            className="w-12 h-12 rounded-full mx-auto object-cover"
+                          />
+                          <h3 className="mt-2 text-center text-gray-800 dark:text-gray-200">
+                            Ẩn danh
                           </h3>
                         </>
                       )}
@@ -165,14 +182,15 @@ const FriendsPage = () => {
                 Bạn bè
               </h1>
               {friends.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-400">Bạn chưa có bạn bè nào.</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Bạn chưa có bạn bè nào.
+                </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   {friends.map((friend) => (
                     <div
                       key={friend.id}
-                      className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center cursor-pointer"
-                      onClick={() => setSelectedUser(friend)}
+                      className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center"
                     >
                       <img
                         src={getAvatarUrl(friend.avatarUrl)}

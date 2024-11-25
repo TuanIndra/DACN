@@ -43,7 +43,10 @@ public class PostService {
     private UserService userService;
 
     @Autowired
-    private GroupRepository groupRepository; // Nếu bạn sử dụng chức năng nhóm
+    private GroupRepository groupRepository;
+
+    @Autowired
+    private GroupMemberRepository groupMemberRepository;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -287,6 +290,43 @@ public class PostService {
         post.setContent(updatedContent);
         post.setUpdatedAt(LocalDateTime.now());
         return postRepository.save(post);
+    }
+
+    //Phương thức tạo bài đăng cho group
+    @Transactional
+    public Post createGroupPost(Long groupId, String username, String content) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Kiểm tra xem người dùng có phải là thành viên với trạng thái ACCEPTED hay không
+        boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+        if (!isAcceptedMember) {
+            throw new RuntimeException("You must be an accepted member of this group to perform this action");
+        }
+
+        // Tạo bài viết
+        Post post = new Post();
+        post.setContent(content);
+        post.setUser(user);
+        post.setGroup(group);
+
+        return postRepository.save(post);
+    }
+
+    //Phương thức xem các bài đăng trong group
+    public List<PostDTO> getPostsByGroup(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        List<Post> posts = postRepository.findByGroup(group);
+
+        // Chuyển đổi sang PostDTO
+        return posts.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 }
 

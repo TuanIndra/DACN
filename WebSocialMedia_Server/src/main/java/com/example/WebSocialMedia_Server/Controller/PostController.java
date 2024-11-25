@@ -31,6 +31,8 @@ public class PostController {
         List<PostDTO> allPosts = postService.getAllPosts();
         return ResponseEntity.ok(allPosts);
     }
+
+    //đăng bài viết
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostDTO> createPost(
             @RequestParam("post") String postJson,

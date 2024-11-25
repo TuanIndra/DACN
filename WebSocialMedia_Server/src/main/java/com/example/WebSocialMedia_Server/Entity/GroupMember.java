@@ -35,6 +35,10 @@ public class GroupMember {
     @Column(length = 20)
     private GroupRole role; // admin, member
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private RequestStatus status = RequestStatus.PENDING;
+
     @CreationTimestamp
     @Column(name = "joined_at", updatable = false)
     private LocalDateTime joinedAt;

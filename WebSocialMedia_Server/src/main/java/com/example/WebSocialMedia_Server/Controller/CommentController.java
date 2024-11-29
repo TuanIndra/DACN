@@ -30,7 +30,7 @@ public class CommentController {
     }
 
     // Trả lời một bình luận
-    @PostMapping("/comments/{commentId}/replies")
+    @PostMapping("comments/{commentId}/replies")
     public ResponseEntity<CommentDTO> replyToComment(
             @PathVariable Long commentId,
             @RequestBody CommentDTO commentDTO,
@@ -42,9 +42,18 @@ public class CommentController {
     }
 
     // Lấy danh sách bình luận của một bài viết
-    @GetMapping("/posts/{postId}/comments")
-    public ResponseEntity<List<CommentDTO>> getCommentsByPostId(@PathVariable Long postId) {
-        List<CommentDTO> comments = commentService.getCommentsByPostId(postId);
+    @GetMapping("posts/{postId}/comments")
+    public ResponseEntity<List<CommentDTO>> getCommentsByPostId(
+            @PathVariable Long postId,
+            Authentication authentication) {
+
+        // Lấy tên người dùng từ token JWT
+        String username = authentication.getName();
+
+        // Gọi service để lấy danh sách bình luận
+        List<CommentDTO> comments = commentService.getCommentsByPostId(postId, username);
+
+        // Trả về kết quả
         return ResponseEntity.ok(comments);
     }
     // dem binh luan
@@ -54,18 +63,20 @@ public class CommentController {
         return ResponseEntity.ok(count);
     }
     //sua comment
-    @PutMapping("/{commentId}")
+    @PutMapping("comments/{commentId}")
     public ResponseEntity<CommentDTO> updateComment(
             @PathVariable Long commentId,
-            @RequestBody String updatedContent,
+            @RequestBody CommentDTO commentDTO,
             Authentication authentication) {
 
         String username = authentication.getName();
-        Comment updatedComment = commentService.updateComment(commentId, updatedContent, username);
 
-        // Chuyển đổi `Comment` sang `CommentDTO` (giả sử đã có convertToDTO trong CommentService)
-        CommentDTO commentDTO = commentService.convertToDTO(updatedComment);
+        // Gửi nội dung cần cập nhật tới service
+        Comment updatedComment = commentService.updateComment(commentId, commentDTO.getContent(), username);
 
-        return ResponseEntity.ok(commentDTO);
+        // Chuyển đổi đối tượng `Comment` sang `CommentDTO` để trả về
+        CommentDTO updatedCommentDTO = commentService.convertToDTO(updatedComment);
+
+        return ResponseEntity.ok(updatedCommentDTO);
     }
 }

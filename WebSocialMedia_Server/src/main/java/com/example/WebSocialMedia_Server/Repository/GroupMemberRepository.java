@@ -21,5 +21,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
     List<GroupMember> findByGroupIdAndStatus(Long groupId, RequestStatus status);
     // Tìm thành viên của nhóm theo groupId, userId và status
     Optional<GroupMember> findByGroupIdAndUserIdAndStatus(Long groupId, Long userId, RequestStatus status);
+
+    List<GroupMember> findByUserAndStatus(User user, RequestStatus status);
     boolean existsByGroupAndUserAndStatus(Group group, User user, RequestStatus status);
 }

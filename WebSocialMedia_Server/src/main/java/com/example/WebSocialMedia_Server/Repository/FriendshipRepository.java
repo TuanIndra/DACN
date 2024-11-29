@@ -26,6 +26,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
     @Query("SELECT f FROM Friendship f WHERE (f.requester = :user OR f.addressee = :user) AND f.status = 'ACCEPTED'")
     List<Friendship> findAcceptedFriendships(@Param("user") User user);
 
+    Optional<Friendship> findByAddresseeAndRequester(User addressee, User requester);
+
     // Lấy danh sách bạn bè của người dùng (những yêu cầu đã được chấp nhận)
     List<Friendship> findByRequesterAndStatusOrAddresseeAndStatus(User requester, FriendshipStatus status1, User addressee, FriendshipStatus status2);
 }

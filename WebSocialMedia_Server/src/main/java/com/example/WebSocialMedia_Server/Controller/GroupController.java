@@ -170,22 +170,6 @@ public class GroupController {
         return ResponseEntity.ok("Left group successfully");
     }
 
-    // đăng bài viết vào nhóm
-    @PostMapping("/{groupId}/posts")
-    public ResponseEntity<PostDTO> createGroupPost(
-            @PathVariable Long groupId,
-            @RequestBody String content,
-            Authentication authentication) {
-
-        String username = authentication.getName();
-        Post post = postService.createGroupPost(groupId, username, content);
-
-        // Chuyển đổi Post sang PostDTO
-        PostDTO postDTO = postService.convertToDTO(post);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(postDTO);
-    }
-
     //xem bài viết của nhóm
     @GetMapping("/{groupId}/posts")
     public ResponseEntity<List<PostDTO>> getGroupPosts(

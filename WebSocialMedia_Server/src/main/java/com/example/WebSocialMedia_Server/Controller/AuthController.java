@@ -93,23 +93,37 @@ public class AuthController {
 
     // Endpoint đăng nhập
     @PostMapping("/login")
-
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDTO loginDTO) {
         // Tìm User dựa trên username hoặc email
         User user = userRepository.findByUsernameOrEmail(loginDTO.getUsernameOrEmail(), loginDTO.getUsernameOrEmail())
                 .orElseThrow(() -> new RuntimeException("User not found with username or email: " + loginDTO.getUsernameOrEmail()));
 
+        // Xác thực thông tin đăng nhập
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
                         loginDTO.getPassword()
                 )
         );
+
+        // Đặt thông tin xác thực vào ngữ cảnh bảo mật
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        // Tạo JWT token
         String jwt = jwtTokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(jwt);
+
+        // Tạo response bao gồm token và thông tin người dùng
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", jwt);
+        response.put("userId", user.getId()); // Thêm userId vào response
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
+        response.put("fullName", user.getFullName());
+
+        return ResponseEntity.ok(response);
     }
+
+    //doi anh dai dien
     @PutMapping("/avatar")
     public ResponseEntity<UserDTO> updateAvatar(
             @RequestParam("file") MultipartFile file,

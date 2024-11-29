@@ -1,12 +1,8 @@
 package com.example.WebSocialMedia_Server.Service;
 
 import com.example.WebSocialMedia_Server.DTO.CommentDTO;
-import com.example.WebSocialMedia_Server.Entity.Comment;
-import com.example.WebSocialMedia_Server.Entity.Post;
-import com.example.WebSocialMedia_Server.Entity.User;
-import com.example.WebSocialMedia_Server.Repository.CommentRepository;
-import com.example.WebSocialMedia_Server.Repository.PostRepository;
-import com.example.WebSocialMedia_Server.Repository.UserRepository;
+import com.example.WebSocialMedia_Server.Entity.*;
+import com.example.WebSocialMedia_Server.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +18,16 @@ public class CommentService {
     private CommentRepository commentRepository;
 
     @Autowired
+    private ReactionRepository reactionRepository;
+
+    @Autowired
     private PostRepository postRepository;
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private GroupMemberRepository groupMemberRepository;
 
     // Tạo bình luận mới cho bài viết
     @Transactional
@@ -36,7 +38,18 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        Comment comment = new Comment();
+        // Kiểm tra quyền truy cập bài viết
+        if (post.getGroup() != null) {
+            Group group = post.getGroup();
+
+            // Nếu nhóm là PRIVATE hoặc SECRET, chỉ cho phép thành viên được chấp nhận bình luận
+            if (group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET) {
+                boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+                if (!isAcceptedMember) {
+                    throw new RuntimeException("You are not authorized to comment on this post");
+                }
+            }
+        }        Comment comment = new Comment();
         comment.setContent(content);
         comment.setUser(user);
         comment.setPost(post);
@@ -55,6 +68,20 @@ public class CommentService {
         Comment parentComment = commentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new RuntimeException("Parent comment not found"));
 
+        Post post = parentComment.getPost();
+        // Kiểm tra quyền truy cập bài viết
+        if (post.getGroup() != null) {
+            Group group = post.getGroup();
+
+            // Nếu nhóm là PRIVATE hoặc SECRET, chỉ cho phép thành viên được chấp nhận trả lời
+            if (group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET) {
+                boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+                if (!isAcceptedMember) {
+                    throw new RuntimeException("You are not authorized to reply to this comment");
+                }
+            }
+        }
+
         Comment reply = new Comment();
         reply.setContent(content);
         reply.setUser(user);
@@ -68,7 +95,24 @@ public class CommentService {
 
     // Lấy danh sách bình luận của một bài viết
     @Transactional(readOnly = true)
-    public List<CommentDTO> getCommentsByPostId(Long postId) {
+    public List<CommentDTO> getCommentsByPostId(Long postId, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        // Kiểm tra quyền truy cập bài viết
+        if (post.getGroup() != null) {
+            Group group = post.getGroup();
+
+            // Nếu nhóm là PRIVATE hoặc SECRET, chỉ cho phép thành viên được chấp nhận xem bình luận
+            if (group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET) {
+                boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+                if (!isAcceptedMember) {
+                    throw new RuntimeException("You are not authorized to view comments for this post");
+                }
+            }
+        }
         List<Comment> comments = commentRepository.findByPostIdAndParentCommentIsNull(postId);
         return comments.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -92,6 +136,9 @@ public class CommentService {
             dto.setReplies(replies);
         }
 
+        // Đếm số reactions cho comment
+        int reactionCount = reactionRepository.countByCommentId(comment.getId());
+        dto.setReactionCount(reactionCount);
         return dto;
     }
     //chuc năng dem bl

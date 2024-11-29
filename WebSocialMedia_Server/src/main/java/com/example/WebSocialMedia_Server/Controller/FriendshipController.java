@@ -78,4 +78,16 @@ public class FriendshipController {
         List<FriendshipDTO> sentRequests = friendshipService.getPendingSentRequests(userId);
         return ResponseEntity.ok(sentRequests);
     }
+
+    //huy kb
+    @DeleteMapping("/{friendUsername}")
+    public ResponseEntity<String> unfriend(
+            @PathVariable String friendUsername,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        friendshipService.unfriend(username, friendUsername);
+
+        return ResponseEntity.ok("Friendship removed successfully");
+    }
 }

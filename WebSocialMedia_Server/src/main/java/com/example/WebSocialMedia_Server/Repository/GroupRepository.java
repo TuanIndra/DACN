@@ -11,4 +11,5 @@ import java.util.List;
 public interface GroupRepository extends JpaRepository<Group, Long> {
     List<Group> findByCreatedById(Long userId);
     List<Group> findByPrivacy(GroupPrivacy privacy);
+    List<Group> findByNameContainingIgnoreCaseAndPrivacyIn(String name, List<GroupPrivacy> privacies);
 }

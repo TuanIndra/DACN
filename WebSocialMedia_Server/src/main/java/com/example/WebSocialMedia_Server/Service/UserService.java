@@ -108,6 +108,7 @@ public class UserService {
 
         return userDTO;
     }
+    //Phuong thuc sua avatar
     public UserDTO updateAvatar(String username, MultipartFile file) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

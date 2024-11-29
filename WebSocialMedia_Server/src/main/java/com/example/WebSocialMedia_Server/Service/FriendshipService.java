@@ -80,6 +80,29 @@ public class FriendshipService {
         friendshipRepository.delete(friendship);
     }
 
+    @Transactional
+    public void unfriend(String username, String friendUsername) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User friend = userRepository.findByUsername(friendUsername)
+                .orElseThrow(() -> new RuntimeException("Friend not found"));
+
+        // Kiểm tra xem có mối quan hệ bạn bè không
+        Optional<Friendship> friendship = friendshipRepository.findByRequesterAndAddressee(user, friend);
+        if (friendship.isEmpty()) {
+            friendship = friendshipRepository.findByAddresseeAndRequester(user, friend);
+        }
+
+        // Nếu không tồn tại quan hệ bạn bè, trả lỗi
+        if (friendship.isEmpty()) {
+            throw new RuntimeException("Friendship not found");
+        }
+
+        // Xóa quan hệ bạn bè
+        friendshipRepository.delete(friendship.get());
+    }
+
     // Phương thức lấy danh sách bạn bè trả về danh sách User
     public List<User> getFriends(Long userId) {
         User user = userRepository.findById(userId)

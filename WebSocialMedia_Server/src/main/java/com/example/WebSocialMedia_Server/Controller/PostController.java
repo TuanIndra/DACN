@@ -1,7 +1,9 @@
 package com.example.WebSocialMedia_Server.Controller;
 
 import com.example.WebSocialMedia_Server.DTO.PostDTO;
+import com.example.WebSocialMedia_Server.Entity.Group;
 import com.example.WebSocialMedia_Server.Entity.Post;
+import com.example.WebSocialMedia_Server.Repository.GroupRepository;
 import com.example.WebSocialMedia_Server.Service.PostService;
 import com.example.WebSocialMedia_Server.Service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,12 +26,23 @@ public class PostController {
     private PostService postService;
 
     @Autowired
+    private GroupRepository groupRepository;
+
+    @Autowired
     private UserService userService;
-    // Endpoint để lấy tất cả bài viết
+    // Endpoint để lấy tất cả bài viết cong khai
     @GetMapping
     public ResponseEntity<List<PostDTO>> getAllPosts() {
         List<PostDTO> allPosts = postService.getAllPosts();
         return ResponseEntity.ok(allPosts);
+    }
+
+    //lay cac bai viet thuoc nhom private va secret cho thanh vien
+    @GetMapping("/private-timeline")
+    public ResponseEntity<List<PostDTO>> getPrivateAndSecretTimeline(Authentication authentication) {
+        String username = authentication.getName();
+        List<PostDTO> posts = postService.getPostsByPrivateOrSecretGroups(username);
+        return ResponseEntity.ok(posts);
     }
 
     //đăng bài viết
@@ -44,6 +57,13 @@ public class PostController {
         ObjectMapper objectMapper = new ObjectMapper();
         PostDTO postDTO = objectMapper.readValue(postJson, PostDTO.class);
 
+        // Kiểm tra nếu có `groupId`, ánh xạ nhóm
+        if (postDTO.getGroupId() != null) {
+            Group group = groupRepository.findById(postDTO.getGroupId())
+                    .orElseThrow(() -> new RuntimeException("Group not found"));
+            postDTO.setNameGroup(group.getName());
+        }
+
         Post createdPost = postService.createPost(postDTO, files, username);
 
         PostDTO responseDTO = postService.convertToDTO(createdPost);
@@ -51,24 +71,6 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
-    // Endpoint để lấy dòng thời gian của người dùng
-    @GetMapping("/timeline")
-    public ResponseEntity<List<PostDTO>> getUserTimeline(Authentication authentication) {
-        String username = authentication.getName();
-        Long userId = userService.findByUsername(username).getId();
-
-        List<PostDTO> timelinePosts = postService.getUserTimeline(userId);
-        return ResponseEntity.ok(timelinePosts);
-    }
-    // Endpoint để lấy news feed
-    @GetMapping("/newsfeed")
-    public ResponseEntity<List<PostDTO>> getNewsFeed(Authentication authentication) {
-        String username = authentication.getName();
-        Long userId = userService.findByUsername(username).getId();
-
-        List<PostDTO> newsFeedPosts = postService.getNewsFeed(userId);
-        return ResponseEntity.ok(newsFeedPosts);
-    }
     // xóa bài viet
     @DeleteMapping("/{postId}")
     public ResponseEntity<String> deletePost(@PathVariable Long postId, Authentication authentication) {

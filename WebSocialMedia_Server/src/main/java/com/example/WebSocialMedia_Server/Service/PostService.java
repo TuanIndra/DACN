@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 public class PostService {
 
     @Autowired
+    private ReactionRepository reactionRepository;
+
+    @Autowired
     private CommentRepository commentRepository;
 
     @Autowired
@@ -58,6 +61,8 @@ public class PostService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+
+
         // Tạo đối tượng Post
         Post post = Post.builder()
                 .content(postDTO.getContent())
@@ -65,15 +70,22 @@ public class PostService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        // Khởi tạo mediaList
-        post.setMediaList(new ArrayList<>());
 
-        // Nếu bài viết thuộc một nhóm
+        // Nếu có groupId, kiểm tra quyền và gán nhóm
+        Group group = null;
         if (postDTO.getGroupId() != null) {
-            Group group = groupRepository.findById(postDTO.getGroupId())
+            group = groupRepository.findById(postDTO.getGroupId())
                     .orElseThrow(() -> new RuntimeException("Group not found"));
+
+            // Kiểm tra xem người dùng có phải là thành viên đã được duyệt không
+            boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+            if (!isAcceptedMember) {
+                throw new RuntimeException("You are not allowed to post in this group");
+            }
             post.setGroup(group);
         }
+        // Khởi tạo mediaList
+        post.setMediaList(new ArrayList<>());
 
         // Lưu bài viết vào cơ sở dữ liệu
         post = postRepository.save(post);
@@ -111,88 +123,31 @@ public class PostService {
         return post;
     }
 
-    // Phương thức lấy dòng thời gian của người dùng
-    public List<PostDTO> getUserTimeline(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Lấy danh sách bài viết do người dùng tạo
-        List<Post> userPosts = postRepository.findByUser(user);
-
-        // Lấy danh sách các chia sẻ của người dùng
-        List<Share> userShares = shareRepository.findByUser(user);
-
-        // Tạo danh sách PostDTO
-        List<PostDTO> timelinePosts = new ArrayList<>();
-
-        // Chuyển đổi các bài viết do người dùng tạo thành PostDTO
-        for (Post post : userPosts) {
-            PostDTO postDTO = convertToDTO(post);
-            timelinePosts.add(postDTO);
-        }
-
-        // Chuyển đổi các bài viết được chia sẻ thành PostDTO
-        for (Share share : userShares) {
-            Post sharedPost = share.getPost();
-            PostDTO postDTO = convertToDTO(sharedPost);
-
-            // Thêm thông tin về việc chia sẻ
-            postDTO.setSharedBy(userService.convertToDTO(user));
-            postDTO.setSharedAt(share.getSharedAt());
-            //postDTO.setShareComment(share.getComment()); // Nếu bạn có trường comment trong Share
-
-            timelinePosts.add(postDTO);
-        }
-
-        // Sắp xếp danh sách theo thời gian (giảm dần)
-        timelinePosts.sort((p1, p2) -> {
-            LocalDateTime dateTime1 = p1.getSharedAt() != null ? p1.getSharedAt() : p1.getCreatedAt();
-            LocalDateTime dateTime2 = p2.getSharedAt() != null ? p2.getSharedAt() : p2.getCreatedAt();
-            return dateTime2.compareTo(dateTime1); // Sắp xếp giảm dần theo thời gian
-        });
-
-        return timelinePosts;
-    }
+    // Phương thức lấy tat ca bai viet cong khai
     public List<PostDTO> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
+        List<Post> posts = postRepository.findAll().stream()
+                .filter(post -> post.getGroup() == null || post.getGroup().getPrivacy() == GroupPrivacy.PUBLIC)
+                .collect(Collectors.toList());
+
+
         return posts.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
-    public List<PostDTO> getNewsFeed(Long userId) {
-        User user = userRepository.findById(userId)
+
+    //Lay bai viet cho nhung nguoi thuoc nhom PRVIVATE va SECRET
+    public List<PostDTO> getPostsByPrivateOrSecretGroups(String username) {
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<User> friends = friendshipService.getFriends(userId);
-        friends.add(user);  // Bao gồm cả chính người dùng
 
-        List<PostDTO> newsFeedPosts = new ArrayList<>();
+        List<Group> privateAndSecretGroups = groupMemberRepository.findByUserAndStatus(user, RequestStatus.ACCEPTED)
+                .stream()
+                .map(GroupMember::getGroup)
+                .filter(group -> group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET)
+                .collect(Collectors.toList());
 
-        for (User friend : friends) {
-            List<Post> friendPosts = postRepository.findByUser(friend);
-            for (Post post : friendPosts) {
-                PostDTO postDTO = convertToDTO(post);
-                newsFeedPosts.add(postDTO);
-            }
+        List<Post> posts = postRepository.findByGroupIn(privateAndSecretGroups);
 
-            List<Share> friendShares = shareRepository.findByUser(friend);
-            for (Share share : friendShares) {
-                Post sharedPost = share.getPost();
-                PostDTO postDTO = convertToDTO(sharedPost);
-
-                postDTO.setSharedBy(userService.convertToDTO(friend));
-                postDTO.setSharedAt(share.getSharedAt());
-                postDTO.setShareComment(share.getComment());
-
-                newsFeedPosts.add(postDTO);
-            }
-        }
-
-        newsFeedPosts.sort((p1, p2) -> {
-            LocalDateTime dateTime1 = p1.getSharedAt() != null ? p1.getSharedAt() : p1.getCreatedAt();
-            LocalDateTime dateTime2 = p2.getSharedAt() != null ? p2.getSharedAt() : p2.getCreatedAt();
-            return dateTime2.compareTo(dateTime1);
-        });
-
-        return newsFeedPosts;
+        return posts.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     // Hàm lưu tệp tin vào máy chủ
@@ -256,6 +211,12 @@ public class PostService {
         userDTO.setUsername(user.getUsername());
         userDTO.setFullName(user.getFullName());
 
+        // Thêm thông tin nhóm nếu có
+        if (post.getGroup() != null) {
+            postDTO.setGroupId(post.getGroup().getId());
+            postDTO.setNameGroup(post.getGroup().getName());
+        }
+
         postDTO.setUser(userDTO);
 
         // Xử lý mediaList
@@ -272,6 +233,10 @@ public class PostService {
         }
         int commentCount = commentRepository.countByPostId(post.getId());
         postDTO.setCommentCount(commentCount);
+        // Đếm số reactions cho post
+        int reactionCount = reactionRepository.countByPostId(post.getId());
+        postDTO.setReactionCount(reactionCount);
+
         return postDTO;
     }
 
@@ -289,30 +254,6 @@ public class PostService {
         // Cập nhật nội dung bài viết
         post.setContent(updatedContent);
         post.setUpdatedAt(LocalDateTime.now());
-        return postRepository.save(post);
-    }
-
-    //Phương thức tạo bài đăng cho group
-    @Transactional
-    public Post createGroupPost(Long groupId, String username, String content) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
-
-        // Kiểm tra xem người dùng có phải là thành viên với trạng thái ACCEPTED hay không
-        boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
-        if (!isAcceptedMember) {
-            throw new RuntimeException("You must be an accepted member of this group to perform this action");
-        }
-
-        // Tạo bài viết
-        Post post = new Post();
-        post.setContent(content);
-        post.setUser(user);
-        post.setGroup(group);
-
         return postRepository.save(post);
     }
 

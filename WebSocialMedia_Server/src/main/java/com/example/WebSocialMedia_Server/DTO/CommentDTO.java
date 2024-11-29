@@ -16,5 +16,6 @@ public class CommentDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<CommentDTO> replies;
+    private int reactionCount;
 }
 

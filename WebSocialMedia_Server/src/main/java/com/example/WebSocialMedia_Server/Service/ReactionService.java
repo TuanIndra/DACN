@@ -1,10 +1,7 @@
 package com.example.WebSocialMedia_Server.Service;
 
 import com.example.WebSocialMedia_Server.Entity.*;
-import com.example.WebSocialMedia_Server.Repository.CommentRepository;
-import com.example.WebSocialMedia_Server.Repository.PostRepository;
-import com.example.WebSocialMedia_Server.Repository.ReactionRepository;
-import com.example.WebSocialMedia_Server.Repository.UserRepository;
+import com.example.WebSocialMedia_Server.Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +15,9 @@ public class ReactionService {
 
     @Autowired
     private ReactionRepository reactionRepository;
+
+    @Autowired
+    private GroupMemberRepository groupMemberRepository;
 
     @Autowired
     private PostRepository postRepository;
@@ -36,6 +36,19 @@ public class ReactionService {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Kiểm tra quyền truy cập bài viết
+        if (post.getGroup() != null) {
+            Group group = post.getGroup();
+
+            // Nếu nhóm là PRIVATE hoặc SECRET, chỉ cho phép thành viên được chấp nhận tương tác
+            if (group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET) {
+                boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+                if (!isAcceptedMember) {
+                    throw new RuntimeException("You are not authorized to react to this post");
+                }
+            }
+        }
 
         // Kiểm tra xem người dùng đã reaction chưa
         Optional<Reaction> existingReactionOpt = reactionRepository.findByUserAndPost(user, post);
@@ -63,6 +76,22 @@ public class ReactionService {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        Post post = comment.getPost();
+
+        // Kiểm tra quyền truy cập bài viết
+        if (post.getGroup() != null) {
+            Group group = post.getGroup();
+
+            // Nếu nhóm là PRIVATE hoặc SECRET, chỉ cho phép thành viên được chấp nhận tương tác
+            if (group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET) {
+                boolean isAcceptedMember = groupMemberRepository.existsByGroupAndUserAndStatus(group, user, RequestStatus.ACCEPTED);
+                if (!isAcceptedMember) {
+                    throw new RuntimeException("You are not authorized to react to this comment");
+                }
+            }
+        }
+
 
         // Kiểm tra xem người dùng đã reaction chưa
         Optional<Reaction> existingReactionOpt = reactionRepository.findByUserAndComment(user, comment);

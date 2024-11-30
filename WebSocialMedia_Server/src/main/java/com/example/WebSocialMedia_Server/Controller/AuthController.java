@@ -1,6 +1,7 @@
 package com.example.WebSocialMedia_Server.Controller;
 
 import com.example.WebSocialMedia_Server.DTO.LoginDTO;
+import com.example.WebSocialMedia_Server.DTO.UpdateUserInfoDTO;
 import com.example.WebSocialMedia_Server.DTO.UserDTO;
 import com.example.WebSocialMedia_Server.Entity.User;
 import com.example.WebSocialMedia_Server.Entity.VerificationToken;
@@ -131,6 +132,49 @@ public class AuthController {
 
         String username = authentication.getName();
         UserDTO updatedUser = userService.updateAvatar(username, file);
+
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    //doi mat khau
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        userService.changePassword(username, oldPassword, newPassword);
+        return ResponseEntity.ok("Password updated successfully");
+    }
+
+    // Gửi yêu cầu quên mật khẩu
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+        userService.sendResetPasswordEmail(email);
+        return ResponseEntity.ok("Password reset link sent to your email");
+    }
+
+    // Đặt lại mật khẩu
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        userService.resetPassword(token, newPassword);
+        return ResponseEntity.ok("Password has been reset successfully");
+    }
+
+    //doi thong tin co ban cua user
+    @PutMapping("/update-info")
+    public ResponseEntity<UserDTO> updateUserInfo(
+            @RequestBody UpdateUserInfoDTO updateUserInfoDTO,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+
+        UserDTO updatedUser = userService.updateUserInfo(
+                username,
+                updateUserInfoDTO.getFullName(),
+                updateUserInfoDTO.getBio()
+        );
 
         return ResponseEntity.ok(updatedUser);
     }

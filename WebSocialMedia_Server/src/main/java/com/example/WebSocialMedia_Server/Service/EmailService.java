@@ -31,4 +31,28 @@ public class EmailService {
             throw new RuntimeException("Failed to send verification email");
         }
     }
+
+    /**
+     * Phương thức gửi email đơn giản.
+     *
+     * @param to      Email người nhận
+     * @param subject Chủ đề email
+     * @param text    Nội dung email
+     */
+    public void sendSimpleMessage(String to, String subject, String text) {
+        SimpleMailMessage email = new SimpleMailMessage();
+        email.setTo(to);
+        email.setSubject(subject);
+        email.setText(text);
+
+        try {
+            mailSender.send(email);
+        } catch (Exception e) {
+            // Log lỗi chi tiết
+            System.err.println("Error sending email: " + e.getMessage());
+            e.printStackTrace();
+            // Có thể ném ngoại lệ tùy chỉnh hoặc xử lý theo cách phù hợp
+            throw new RuntimeException("Failed to send email");
+        }
+    }
 }

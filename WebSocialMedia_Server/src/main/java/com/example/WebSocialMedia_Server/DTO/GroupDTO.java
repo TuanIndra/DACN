@@ -10,4 +10,5 @@ public class GroupDTO {
     private String description;
     private GroupPrivacy privacy;
     private Long createdById;
+    private String imageUrl;
 }

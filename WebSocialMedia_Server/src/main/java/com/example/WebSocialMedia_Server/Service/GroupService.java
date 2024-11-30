@@ -9,6 +9,7 @@ import com.example.WebSocialMedia_Server.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,9 +26,12 @@ public class GroupService {
     @Autowired
     private GroupMemberRepository groupMemberRepository;
 
+    @Autowired
+    private StorageService storageService;
+
     //Phương thức tạo nhóm
     @Transactional
-    public Group createGroup(String username, GroupDTO groupDTO) {
+    public Group createGroup(String username, GroupDTO groupDTO, MultipartFile imageFile) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -37,6 +41,12 @@ public class GroupService {
         group.setDescription(groupDTO.getDescription());
         group.setPrivacy(groupDTO.getPrivacy());
         group.setCreatedBy(user);
+
+        // Lưu ảnh nhóm (nếu có)
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = storageService.storeFile(imageFile); // Lưu ảnh và lấy URL
+            group.setImageUrl(imageUrl);
+        }
 
         // Lưu nhóm
         Group savedGroup = groupRepository.save(group);

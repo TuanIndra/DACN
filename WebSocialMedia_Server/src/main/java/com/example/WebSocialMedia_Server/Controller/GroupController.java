@@ -9,11 +9,15 @@ import com.example.WebSocialMedia_Server.Entity.Post;
 import com.example.WebSocialMedia_Server.Service.GroupService;
 import com.example.WebSocialMedia_Server.Service.PostService;
 import com.example.WebSocialMedia_Server.Service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,15 +36,23 @@ public class GroupController {
     private PostService postService;
 
     //tạo nhóm
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GroupDTO> createGroup(
-            @RequestBody GroupDTO groupDTO,
-            Authentication authentication) {
+            @RequestPart("group") String groupJson,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+            Authentication authentication)throws JsonProcessingException {
 
         String username = authentication.getName();
-        Group group = groupService.createGroup(username, groupDTO);
+
 
         // Chuyển đổi Group sang GroupDTO
+        ObjectMapper objectMapper = new ObjectMapper();
+        GroupDTO groupDTO = objectMapper.readValue(groupJson, GroupDTO.class);
+
+        // Tạo nhóm
+        Group group = groupService.createGroup(username, groupDTO, imageFile);
+
+        // Chuyển đổi sang DTO để trả về
         GroupDTO responseDTO = groupService.convertToDTO(group);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);

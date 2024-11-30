@@ -2,10 +2,8 @@ package com.example.WebSocialMedia_Server.Service;
 
 import com.example.WebSocialMedia_Server.DTO.RoleDTO;
 import com.example.WebSocialMedia_Server.DTO.UserDTO;
-import com.example.WebSocialMedia_Server.Entity.Role;
-import com.example.WebSocialMedia_Server.Entity.RoleName;
-import com.example.WebSocialMedia_Server.Entity.User;
-import com.example.WebSocialMedia_Server.Entity.VerificationToken;
+import com.example.WebSocialMedia_Server.Entity.*;
+import com.example.WebSocialMedia_Server.Repository.ResetTokenRepository;
 import com.example.WebSocialMedia_Server.Repository.RoleRepository;
 import com.example.WebSocialMedia_Server.Repository.UserRepository;
 
@@ -33,6 +31,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ResetTokenRepository resetTokenRepository;
 
     @Autowired
     private StorageService storageService;
@@ -149,4 +150,82 @@ public class UserService {
 
         return "Account verified successfully!";
     }
+
+    //doi mat khau
+    @Transactional
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        // Cập nhật mật khẩu mới
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    //quen mk
+    @Transactional
+    public void sendResetPasswordEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        // Tạo token reset mật khẩu
+        String token = UUID.randomUUID().toString();
+        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(15);
+
+        // Xóa token cũ nếu có
+        resetTokenRepository.deleteByUser(user);
+
+        ResetToken resetToken = new ResetToken(token, user, expiryDate);
+        resetTokenRepository.save(resetToken);
+
+        // Gửi email
+        String resetLink = "http://localhost:8082/api/auth/reset-password?token=" + token;
+        emailService.sendSimpleMessage(user.getEmail(), "Password Reset Request",
+                "Click the link below to reset your password:\n" + resetLink);
+    }
+
+    //reset mk
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        ResetToken resetToken = resetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
+
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token expired");
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Xóa token sau khi sử dụng
+        resetTokenRepository.delete(resetToken);
+    }
+
+    //doi thong tin co ban cua user
+    @Transactional
+    public UserDTO updateUserInfo(String username, String newFullName, String newBio) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Cập nhật thông tin
+        if (newFullName != null && !newFullName.trim().isEmpty()) {
+            user.setFullName(newFullName);
+        }
+
+        if (newBio != null && newBio.length() <= 255) {
+            user.setBio(newBio);
+        }
+
+        User updatedUser = userRepository.save(user);
+
+        // Chuyển đổi sang UserDTO và trả về
+        return convertToDTO(updatedUser);
+    }
+
 }

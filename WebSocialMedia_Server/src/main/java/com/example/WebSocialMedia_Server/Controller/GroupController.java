@@ -5,7 +5,6 @@ import com.example.WebSocialMedia_Server.DTO.GroupMemberDTO;
 import com.example.WebSocialMedia_Server.DTO.PostDTO;
 import com.example.WebSocialMedia_Server.Entity.Group;
 import com.example.WebSocialMedia_Server.Entity.GroupMember;
-import com.example.WebSocialMedia_Server.Entity.Post;
 import com.example.WebSocialMedia_Server.Service.GroupService;
 import com.example.WebSocialMedia_Server.Service.PostService;
 import com.example.WebSocialMedia_Server.Service.UserService;
@@ -40,20 +39,20 @@ public class GroupController {
     public ResponseEntity<GroupDTO> createGroup(
             @RequestPart("group") String groupJson,
             @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
-            Authentication authentication)throws JsonProcessingException {
+            Authentication authentication) throws JsonProcessingException {
 
+        // Lấy username từ token JWT
         String username = authentication.getName();
 
-
-        // Chuyển đổi Group sang GroupDTO
+        // Chuyển đổi groupJson thành GroupDTO
         ObjectMapper objectMapper = new ObjectMapper();
         GroupDTO groupDTO = objectMapper.readValue(groupJson, GroupDTO.class);
 
-        // Tạo nhóm
-        Group group = groupService.createGroup(username, groupDTO, imageFile);
+        // Tạo nhóm mới thông qua service
+        Group createdGroup = groupService.createGroup(username, groupDTO, imageFile);
 
-        // Chuyển đổi sang DTO để trả về
-        GroupDTO responseDTO = groupService.convertToDTO(group);
+        // Chuyển đổi Group sang GroupDTO
+        GroupDTO responseDTO = groupService.convertToDTO(createdGroup);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
@@ -227,6 +226,71 @@ public class GroupController {
         groupService.deleteGroup(groupId, username);
 
         return ResponseEntity.ok("Group deleted successfully");
+    }
+
+    // Endpoint lấy danh sách nhóm PUBLIC
+    @GetMapping("/public")
+    public ResponseEntity<List<GroupDTO>> getPublicGroups() {
+        List<GroupDTO> publicGroups = groupService.getPublicGroups();
+        return ResponseEntity.ok(publicGroups);
+    }
+
+    // doi anh dai dien nhom
+    @PutMapping("/{groupId}/update-image")
+    public ResponseEntity<GroupDTO> updateGroupImage(
+            @PathVariable Long groupId,
+            @RequestParam("imageFile") MultipartFile imageFile,
+            Authentication authentication) {
+
+        // Lấy tên admin từ JWT
+        String adminUsername = authentication.getName();
+
+        // Gọi service để đổi ảnh nhóm
+        GroupDTO updatedGroup = groupService.updateGroupImage(groupId, adminUsername, imageFile);
+
+        return ResponseEntity.ok(updatedGroup);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GroupDTO>> getAllGroups() {
+        List<Group> groups = groupService.getAllGroups();
+
+        // Chuyển đổi sang DTO
+        List<GroupDTO> groupDTOs = groups.stream()
+                .map(groupService::convertToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(groupDTOs);
+    }
+
+    // Lấy thông tin chi tiết của nhóm
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupDTO> getGroupDetails(@PathVariable Long groupId) {
+        Group group = groupService.getGroupById(groupId);
+
+        // Chuyển đổi sang DTO
+        GroupDTO groupDTO = groupService.convertToDTO(group);
+        return ResponseEntity.ok(groupDTO);
+    }
+
+    // Kiểm tra xem người dùng có phải là thành viên của nhóm không
+    @GetMapping("/{groupId}/is-member")
+    public ResponseEntity<Boolean> checkMembership(
+            @PathVariable Long groupId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        boolean isMember = groupService.isMember(groupId, username);
+        return ResponseEntity.ok(isMember);
+    }
+
+    @GetMapping("/{groupId}/is-admin")
+    public ResponseEntity<Boolean> isAdmin(
+            @PathVariable Long groupId,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        boolean isAdmin = groupService.isAdmin(groupId, username);
+        return ResponseEntity.ok(isAdmin);
     }
 }
 

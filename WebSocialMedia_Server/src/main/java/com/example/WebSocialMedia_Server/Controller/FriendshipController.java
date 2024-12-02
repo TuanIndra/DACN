@@ -90,4 +90,10 @@ public class FriendshipController {
 
         return ResponseEntity.ok("Friendship removed successfully");
     }
+
+    @GetMapping("/user/{userId}/friends")
+    public ResponseEntity<List<UserDTO>> getFriendsByUserId(@PathVariable Long userId) {
+        List<UserDTO> friends = friendshipService.getFriendsByUserId(userId);
+        return ResponseEntity.ok(friends);
+    }
 }

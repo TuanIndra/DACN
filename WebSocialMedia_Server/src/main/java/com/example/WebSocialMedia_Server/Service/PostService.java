@@ -210,11 +210,30 @@ public class PostService {
         userDTO.setId(user.getId());
         userDTO.setUsername(user.getUsername());
         userDTO.setFullName(user.getFullName());
+        userDTO.setAvatarUrl(user.getAvatarUrl());
 
         // Thêm thông tin nhóm nếu có
         if (post.getGroup() != null) {
             postDTO.setGroupId(post.getGroup().getId());
             postDTO.setNameGroup(post.getGroup().getName());
+        }
+
+        // Xử lý thông tin người share
+        Share share = post.getShares() != null
+                ? post.getShares().stream().findFirst().orElse(null)
+                : null;
+
+        if (share != null) {
+            User sharedByUser = share.getUser();
+            if (sharedByUser != null) {
+                UserDTO sharedByDTO = new UserDTO();
+                sharedByDTO.setId(sharedByUser.getId());
+                sharedByDTO.setUsername(sharedByUser.getUsername());
+                sharedByDTO.setFullName(sharedByUser.getFullName());
+                postDTO.setSharedBy(sharedByDTO);
+            }
+            postDTO.setShareComment(share.getComment());
+            postDTO.setSharedAt(share.getSharedAt());
         }
 
         postDTO.setUser(userDTO);

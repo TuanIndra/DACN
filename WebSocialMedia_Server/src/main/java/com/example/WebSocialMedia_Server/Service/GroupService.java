@@ -372,8 +372,10 @@ public class GroupService {
         dto.setDescription(group.getDescription());
         dto.setPrivacy(group.getPrivacy());
         dto.setCreatedById(group.getCreatedBy().getId());
+        dto.setImageUrl(group.getImageUrl());
         return dto;
     }
+
     // Phương thức chuyển đổi GroupMember sang GroupMemberDTO
     public GroupMemberDTO convertToDTO(GroupMember groupMember) {
         GroupMemberDTO dto = new GroupMemberDTO();
@@ -391,5 +393,68 @@ public class GroupService {
         return dto;
     }
 
+    // Phương thức lấy danh sách nhóm PUBLIC
+    @Transactional(readOnly = true)
+    public List<GroupDTO> getPublicGroups() {
+        List<Group> publicGroups = groupRepository.findByPrivacy(GroupPrivacy.PUBLIC);
+
+        // Chuyển đổi danh sách `Group` sang `GroupDTO`
+        return publicGroups.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    //phuong thuc doi anh dai dien nhom
+    @Transactional
+    public GroupDTO updateGroupImage(Long groupId, String adminUsername, MultipartFile imageFile) {
+        // Tìm người dùng (admin)
+        User adminUser = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new RuntimeException("Admin user not found"));
+
+        // Tìm nhóm
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        // Kiểm tra quyền admin
+        GroupMember adminMember = groupMemberRepository.findByGroupAndUser(group, adminUser)
+                .orElseThrow(() -> new RuntimeException("You are not a member of this group"));
+
+        if (adminMember.getRole() != GroupRole.ADMIN) {
+            throw new RuntimeException("You are not authorized to update the group's image");
+        }
+
+        // Kiểm tra và lưu ảnh mới
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = storageService.storeFile(imageFile); // Lưu ảnh và lấy URL
+            group.setImageUrl(imageUrl);
+        } else {
+            throw new RuntimeException("Invalid image file");
+        }
+
+        // Cập nhật nhóm
+        Group updatedGroup = groupRepository.save(group);
+
+        // Chuyển đổi sang DTO và trả về
+        return convertToDTO(updatedGroup);
+    }
+
+    @Transactional
+    public List<Group> getAllGroups() {
+        return groupRepository.findAll();
+    }
+
+    @Transactional
+    public Group getGroupById(Long groupId) {
+        return groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found with id: " + groupId));
+    }
+
+
+    public boolean isAdmin(Long groupId, String username) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        return group.getCreatedBy().getUsername().equals(username);
+    }
 }
 

@@ -1,23 +1,28 @@
 package com.example.WebSocialMedia_Server.Service;
 
 import com.example.WebSocialMedia_Server.DTO.ShareDTO;
-import com.example.WebSocialMedia_Server.DTO.PostDTO;
 import com.example.WebSocialMedia_Server.DTO.UserDTO;
-import com.example.WebSocialMedia_Server.Entity.Share;
-import com.example.WebSocialMedia_Server.Entity.Post;
-import com.example.WebSocialMedia_Server.Entity.User;
+import com.example.WebSocialMedia_Server.Entity.*;
 import com.example.WebSocialMedia_Server.Repository.ShareRepository;
 import com.example.WebSocialMedia_Server.Repository.PostRepository;
 import com.example.WebSocialMedia_Server.Repository.UserRepository;
-import jakarta.transaction.Transactional;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class ShareService {
 
     @Autowired
     private ShareRepository shareRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private UserRepository userRepository;
@@ -33,37 +38,60 @@ public class ShareService {
 
     // Chia sẻ bài viết với bình luận
     @Transactional
-    public ShareDTO sharePost(Long userId, Long postId, String comment) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+    public Share sharePost(Long postId, String username, String comment) {
+        // Tìm bài viết gốc
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
+        // Tìm người dùng chia sẻ
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Nếu bài viết thuộc nhóm PRIVATE hoặc SECRET, không cho phép share
+        if (post.getGroup() != null) {
+            Group group = post.getGroup();
+            if (group.getPrivacy() == GroupPrivacy.PRIVATE || group.getPrivacy() == GroupPrivacy.SECRET) {
+                throw new RuntimeException("You cannot share posts from PRIVATE or SECRET groups.");
+            }
+        }
+
+        // Tạo thông báo cho chủ bài viết gốc
+        if (!user.getId().equals(post.getUser().getId())) {
+            notificationService.createNotification(
+                    post.getUser().getId(),
+                    NotificationType.SHARE,
+                    postId
+            );
+        }
+
         // Tạo đối tượng Share
         Share share = Share.builder()
-                .user(user)
                 .post(post)
+                .user(user)
                 .comment(comment)
+                .sharedAt(LocalDateTime.now())
                 .build();
 
-        share = shareRepository.save(share);
-
-        return convertToDTO(share);
+        // Lưu đối tượng Share
+        return shareRepository.save(share);
     }
 
-    // Phương thức chuyển đổi Share sang ShareDTO
+    @Transactional(readOnly = true)
     public ShareDTO convertToDTO(Share share) {
         ShareDTO shareDTO = new ShareDTO();
-        shareDTO.setId(share.getId());
-        shareDTO.setSharedAt(share.getSharedAt());
-        shareDTO.setComment(share.getComment());
 
-        UserDTO userDTO = userService.convertToDTO(share.getUser());
+        // Thông tin bài viết được chia sẻ
+        shareDTO.setPost(postService.convertToDTO(share.getPost()));
+
+        // Thông tin người chia sẻ
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(share.getUser().getId());
+        userDTO.setUsername(share.getUser().getUsername());
+        userDTO.setFullName(share.getUser().getFullName());
         shareDTO.setUser(userDTO);
 
-        PostDTO postDTO = postService.convertToDTO(share.getPost());
-        shareDTO.setPost(postDTO);
+        shareDTO.setComment(share.getComment());
+        shareDTO.setSharedAt(share.getSharedAt());
 
         return shareDTO;
     }

@@ -29,6 +29,12 @@ public class CommentService {
     @Autowired
     private GroupMemberRepository groupMemberRepository;
 
+    @Autowired
+    private ShareRepository shareRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
     // Tạo bình luận mới cho bài viết
     @Transactional
     public CommentDTO createComment(Long postId, String content, String username) {
@@ -49,7 +55,17 @@ public class CommentService {
                     throw new RuntimeException("You are not authorized to comment on this post");
                 }
             }
-        }        Comment comment = new Comment();
+        }
+
+        // Tạo thông báo cho chủ bài viết
+        if (!user.getId().equals(post.getUser().getId())) {
+            notificationService.createNotification(
+                    post.getUser().getId(),
+                    NotificationType.COMMENT,
+                    user.getId()
+            );
+        }
+        Comment comment = new Comment();
         comment.setContent(content);
         comment.setUser(user);
         comment.setPost(post);
@@ -161,4 +177,36 @@ public class CommentService {
         comment.setUpdatedAt(LocalDateTime.now());
         return commentRepository.save(comment);
     }
+
+    @Transactional
+    public CommentDTO createCommentForShare(Long shareId, String content, String username) {
+        // Lấy thông tin người dùng
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Lấy bài chia sẻ
+        Share share = shareRepository.findById(shareId)
+                .orElseThrow(() -> new RuntimeException("Shared post not found"));
+
+        // Tạo mới bình luận
+        Comment comment = new Comment();
+        comment.setContent(content);
+        comment.setUser(user);
+        comment.setPost(share.getPost()); // Liên kết bình luận với bài gốc
+        comment.setParentComment(null);
+
+        Comment savedComment = commentRepository.save(comment);
+
+        return convertToDTO(savedComment);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentDTO> getCommentsForSharedPost(Long shareId) {
+        Share share = shareRepository.findById(shareId)
+                .orElseThrow(() -> new RuntimeException("Shared post not found"));
+
+        List<Comment> comments = commentRepository.findByPostIdAndParentCommentIsNull(share.getPost().getId());
+        return comments.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
 }

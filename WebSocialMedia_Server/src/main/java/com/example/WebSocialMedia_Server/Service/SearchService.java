@@ -47,6 +47,7 @@ public class SearchService {
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setFullName(user.getFullName());
+        dto.setAvatarUrl(user.getAvatarUrl());
         return dto;
     }
 

@@ -8,6 +8,8 @@ import java.util.List;
 @Data
 public class PostDTO {
     private Long id;
+    private String shareComment;
+    private String sharedByUsername;
     private String content;
     private Long groupId;
     private String nameGroup;
@@ -19,5 +21,4 @@ public class PostDTO {
     private int reactionCount;
     private UserDTO sharedBy;
     private LocalDateTime sharedAt;
-    private String shareComment;
 }

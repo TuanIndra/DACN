@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ReactionService {
@@ -27,6 +29,14 @@ public class ReactionService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ShareRepository shareRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+
 
     // Thêm reaction cho bài viết
     @Transactional
@@ -65,6 +75,15 @@ public class ReactionService {
             reaction.setPost(post);
             reaction.setReactionType(reactionType);
             reactionRepository.save(reaction);
+        }
+
+        // Tạo thông báo cho chủ bài viết
+        if (!user.getId().equals(post.getUser().getId())) {
+            notificationService.createNotification(
+                    post.getUser().getId(),
+                    NotificationType.LIKE,
+                    user.getId()
+            );
         }
     }
 
@@ -168,5 +187,43 @@ public class ReactionService {
 
         return counts;
     }
+
+    @Transactional
+    public void reactToSharedPost(Long shareId, String username, ReactionType reactionType) {
+        // Lấy thông tin người dùng
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Lấy bài chia sẻ
+        Share share = shareRepository.findById(shareId)
+                .orElseThrow(() -> new RuntimeException("Shared post not found"));
+
+        // Kiểm tra xem người dùng đã phản ứng chưa
+        Optional<Reaction> existingReactionOpt = reactionRepository.findByUserAndPost(user, share.getPost());
+
+        if (existingReactionOpt.isPresent()) {
+            // Nếu đã phản ứng, cập nhật phản ứng
+            Reaction existingReaction = existingReactionOpt.get();
+            existingReaction.setReactionType(reactionType);
+            reactionRepository.save(existingReaction);
+        } else {
+            // Nếu chưa, tạo phản ứng mới
+            Reaction reaction = new Reaction();
+            reaction.setUser(user);
+            reaction.setPost(share.getPost());
+            reaction.setReactionType(reactionType);
+            reactionRepository.save(reaction);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public int getReactionsCountForSharedPost(Long shareId) {
+        Share share = shareRepository.findById(shareId)
+                .orElseThrow(() -> new RuntimeException("Shared post not found"));
+
+        return reactionRepository.countByPostId(share.getPost().getId());
+    }
+
+
 }
 

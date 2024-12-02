@@ -4,6 +4,7 @@ import com.example.WebSocialMedia_Server.DTO.FriendshipDTO;
 import com.example.WebSocialMedia_Server.DTO.UserDTO;
 import com.example.WebSocialMedia_Server.Entity.Friendship;
 import com.example.WebSocialMedia_Server.Entity.FriendshipStatus;
+import com.example.WebSocialMedia_Server.Entity.NotificationType;
 import com.example.WebSocialMedia_Server.Entity.User;
 import com.example.WebSocialMedia_Server.Repository.FriendshipRepository;
 import com.example.WebSocialMedia_Server.Repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FriendshipService {
@@ -23,6 +25,9 @@ public class FriendshipService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // Gửi yêu cầu kết bạn
     @Transactional
@@ -43,12 +48,21 @@ public class FriendshipService {
             throw new RuntimeException("Friend request already sent.");
         }
 
+
+
         // Tạo yêu cầu kết bạn mới
         Friendship friendship = Friendship.builder()
                 .requester(requester)
                 .addressee(addressee)
                 .status(FriendshipStatus.PENDING)
                 .build();
+
+        // Tạo thông báo cho người nhận
+        notificationService.createNotification(
+                addressee.getId(),
+                NotificationType.FRIEND_REQUEST,
+                requester.getId() // Tham chiếu tới ID của người gửi yêu cầu
+        );
 
         return friendshipRepository.save(friendship);
     }
@@ -194,5 +208,10 @@ public class FriendshipService {
             dtoList.add(convertFriendshipToDTO(friendship));
         }
         return dtoList;
+    }
+
+    public List<UserDTO> getFriendsByUserId(Long userId) {
+        List<User> friends = friendshipRepository.findAcceptedFriendsByUserId(userId);
+        return friends.stream().map(this::convertUserToDTO).collect(Collectors.toList());
     }
 }

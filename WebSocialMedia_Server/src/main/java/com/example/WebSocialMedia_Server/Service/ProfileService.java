@@ -2,6 +2,7 @@ package com.example.WebSocialMedia_Server.Service;
 
 import com.example.WebSocialMedia_Server.DTO.PostDTO;
 import com.example.WebSocialMedia_Server.DTO.UserDTO;
+import com.example.WebSocialMedia_Server.Entity.GroupPrivacy;
 import com.example.WebSocialMedia_Server.Entity.Post;
 import com.example.WebSocialMedia_Server.Entity.Share;
 import com.example.WebSocialMedia_Server.Entity.User;
@@ -54,6 +55,11 @@ public class ProfileService {
         // Lấy bài viết do người dùng tạo
         List<Post> posts = postRepository.findByUser(user);
         for (Post post : posts) {
+            // Loại bỏ bài đăng thuộc nhóm private hoặc secret
+            if (post.getGroup() != null &&
+                    (post.getGroup().getPrivacy() == GroupPrivacy.PRIVATE || post.getGroup().getPrivacy() == GroupPrivacy.SECRET)) {
+                continue;
+            }
             PostDTO postDTO = postService.convertToDTO(post);
             userPosts.add(postDTO);
         }
@@ -62,12 +68,20 @@ public class ProfileService {
         List<Share> shares = shareRepository.findByUser(user);
         for (Share share : shares) {
             Post sharedPost = share.getPost();
+
+            // Loại bỏ bài đăng chia sẻ thuộc nhóm private hoặc secret
+            if (sharedPost.getGroup() != null &&
+                    (sharedPost.getGroup().getPrivacy() == GroupPrivacy.PRIVATE || sharedPost.getGroup().getPrivacy() == GroupPrivacy.SECRET)) {
+                continue;
+            }
+
             PostDTO postDTO = postService.convertToDTO(sharedPost);
 
             // Thêm thông tin về việc chia sẻ
-            postDTO.setSharedBy(userService.convertToDTO(user));
-            postDTO.setSharedAt(share.getSharedAt());
-            postDTO.setShareComment(share.getComment());
+            UserDTO sharedByDTO = userService.convertToDTO(user);
+            postDTO.setSharedBy(sharedByDTO); // Thông tin người chia sẻ
+            postDTO.setSharedAt(share.getSharedAt()); // Thời gian chia sẻ
+            postDTO.setShareComment(share.getComment()); // Bình luận khi chia sẻ
 
             userPosts.add(postDTO);
         }
@@ -81,6 +95,7 @@ public class ProfileService {
 
         return userPosts;
     }
+
 
     // Lấy danh sách bạn bè của người dùng
     public List<UserDTO> getUserFriends(Long userId) {

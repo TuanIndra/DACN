@@ -155,9 +155,18 @@ public class AuthController {
         return ResponseEntity.ok("Password reset link sent to your email");
     }
 
+    @GetMapping("/reset-password")
+    public ResponseEntity<String> resetPasswordPage(@RequestParam("token") String token) {
+        // Redirect người dùng đến trang frontend để nhập mật khẩu mới
+        String frontendResetUrl = "http://localhost:5173/reset-password?token=" + token;
+        return ResponseEntity.status(HttpStatus.FOUND).header("Location", frontendResetUrl).build();
+    }
+
     // Đặt lại mật khẩu
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+    public ResponseEntity<String> resetPassword(
+            @RequestParam String token,
+            @RequestParam String newPassword) {
         userService.resetPassword(token, newPassword);
         return ResponseEntity.ok("Password has been reset successfully");
     }

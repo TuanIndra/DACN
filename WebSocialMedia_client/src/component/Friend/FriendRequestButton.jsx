@@ -4,18 +4,19 @@ import {
   cancelFriendRequest,
   fetchPendingSentRequests,
   fetchAcceptedFriends,
+  unfriend, // Thêm API hủy kết bạn
 } from '../../api/friendshipApi';
 
 const FriendRequestButton = ({ currentUserId }) => {
   const [friendshipStatus, setFriendshipStatus] = useState('none'); // "friend", "pendingSent", "none"
   const [friendshipId, setFriendshipId] = useState(null);
 
-  const loggedInUserId = Number(localStorage.getItem('userId'));
+  const loggedInUserId = parseInt(localStorage.getItem('userId'), 10) || 0;
 
   useEffect(() => {
     const fetchFriendshipStatus = async () => {
       try {
-        setFriendshipStatus('none'); // Reset trạng thái
+        setFriendshipStatus('none');
         setFriendshipId(null);
 
         // Kiểm tra danh sách bạn bè đã chấp nhận
@@ -55,6 +56,7 @@ const FriendRequestButton = ({ currentUserId }) => {
     try {
       await sendFriendRequest(currentUserId);
       setFriendshipStatus('pendingSent');
+
       // Lấy lại ID yêu cầu sau khi gửi
       const pendingSentResponse = await fetchPendingSentRequests();
       const pendingSent = pendingSentResponse.data;
@@ -81,31 +83,44 @@ const FriendRequestButton = ({ currentUserId }) => {
     }
   };
 
+  const handleUnfriend = async () => {
+    try {
+      await unfriend(currentUserId); // Gọi API hủy kết bạn
+      setFriendshipStatus('none');
+      setFriendshipId(null);
+    } catch (error) {
+      console.error('Error unfriending user:', error);
+    }
+  };
+
   if (loggedInUserId === currentUserId) {
     return null; // Không hiển thị nút cho chính người dùng
   }
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 flex items-center gap-2">
       {friendshipStatus === 'friend' ? (
-        <div>
-          <span className="text-green-600 font-bold">Bạn bè</span>
+        <>
+          <span className="text-green-600 font-semibold">Bạn bè</span>
           <button
-            className="bg-red-500 text-white px-4 py-2 rounded ml-2"
-            onClick={handleCancelFriendship}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-400 transition"
+            onClick={handleUnfriend}
           >
             Hủy kết bạn
           </button>
-        </div>
+        </>
       ) : friendshipStatus === 'pendingSent' ? (
         <button
-          className="bg-gray-500 text-white px-4 py-2 rounded"
+          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-400 transition"
           onClick={handleCancelFriendship}
         >
-          Hủy yêu cầu kết bạn
+          Hủy yêu cầu
         </button>
       ) : (
-        <button className="bg-primary text-white px-4 py-2 rounded" onClick={handleFriendRequest}>
+        <button
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80 transition"
+          onClick={handleFriendRequest}
+        >
           Kết bạn
         </button>
       )}

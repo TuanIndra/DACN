@@ -11,7 +11,6 @@ const FriendsPage = () => {
   const [activeTab, setActiveTab] = useState('pendingRequests');
   const [pendingRequests, setPendingRequests] = useState([]);
   const [friends, setFriends] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +18,6 @@ const FriendsPage = () => {
       try {
         setLoading(true);
         const pendingResponse = await fetchPendingReceivedRequests();
-        console.log('Pending Requests:', pendingResponse.data); // Check the data structure
         setPendingRequests(pendingResponse.data || []);
         const friendsResponse = await fetchAcceptedFriends();
         setFriends(friendsResponse.data || []);
@@ -33,18 +31,15 @@ const FriendsPage = () => {
     fetchData();
   }, []);
 
-  // Reset selected user when switching tabs
-  useEffect(() => {
-    setSelectedUser(null);
-  }, [activeTab]);
-
   const getAvatarUrl = (avatarUrl) => {
-    if (avatarUrl) {
-      return avatarUrl.startsWith('http')
-        ? avatarUrl
-        : `http://localhost:8082/uploads/${avatarUrl}`;
+    const defaultAvatarUrl = 'http://localhost:8082/uploads/default-avatar.png';
+    if (!avatarUrl || avatarUrl === defaultAvatarUrl) {
+      return defaultAvatarUrl;
     }
-    return '/default-avatar.png';
+    const cleanedUrl = avatarUrl.replace(/\/{2,}/g, '/');
+    return avatarUrl.startsWith('http')
+      ? cleanedUrl
+      : `http://localhost:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
   };
 
   const handleAcceptRequest = async (friendshipId) => {
@@ -90,23 +85,23 @@ const FriendsPage = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Navbar />
       <div className="flex">
-        {/* Left Sidebar */}
-        <div className="w-1/4 bg-gray-200 dark:bg-gray-800 h-screen sticky top-0 p-4">
+        {/* Sidebar Tabs */}
+        <div className="w-1/4 bg-white dark:bg-gray-800 h-screen sticky top-0 p-4 shadow-lg">
           <button
-            className={`w-full px-4 py-2 mb-4 rounded ${
+            className={`w-full px-4 py-2 mb-4 rounded transition ${
               activeTab === 'pendingRequests'
                 ? 'bg-primary text-white'
-                : 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-primary hover:text-white'
             }`}
             onClick={() => setActiveTab('pendingRequests')}
           >
             Lời mời kết bạn
           </button>
           <button
-            className={`w-full px-4 py-2 rounded ${
+            className={`w-full px-4 py-2 rounded transition ${
               activeTab === 'friends'
                 ? 'bg-primary text-white'
-                : 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-primary hover:text-white'
             }`}
             onClick={() => setActiveTab('friends')}
           >
@@ -115,7 +110,7 @@ const FriendsPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="w-3/4 p-4">
+        <div className="w-3/4 p-6">
           {activeTab === 'pendingRequests' && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
@@ -126,44 +121,29 @@ const FriendsPage = () => {
                   Không có lời mời kết bạn nào.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {pendingRequests.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center"
+                      className="bg-white dark:bg-gray-800 p-4 shadow-md rounded-lg text-center"
                     >
-                      {request.requester ? (
-                        <>
-                          <img
-                            src={getAvatarUrl(request.requester.avatarUrl)}
-                            alt={request.requester.fullName || 'Người dùng'}
-                            className="w-12 h-12 rounded-full mx-auto object-cover"
-                          />
-                          <h3 className="mt-2 text-center text-gray-800 dark:text-gray-200">
-                            {request.requester.fullName || 'Ẩn danh'}
-                          </h3>
-                        </>
-                      ) : (
-                        <>
-                          <img
-                            src="/default-avatar.png"
-                            alt="Người dùng"
-                            className="w-12 h-12 rounded-full mx-auto object-cover"
-                          />
-                          <h3 className="mt-2 text-center text-gray-800 dark:text-gray-200">
-                            Ẩn danh
-                          </h3>
-                        </>
-                      )}
-                      <div className="flex justify-center mt-2">
+                      <img
+                        src={getAvatarUrl(request.requester?.avatarUrl)}
+                        alt={request.requester?.fullName || 'Người dùng'}
+                        className="w-16 h-16 rounded-full mx-auto object-cover"
+                      />
+                      <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
+                        {request.requester?.fullName || 'Ẩn danh'}
+                      </h3>
+                      <div className="flex justify-around mt-4">
                         <button
-                          className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded mr-2"
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
                           onClick={() => handleAcceptRequest(request.id)}
                         >
                           Đồng ý
                         </button>
                         <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
                           onClick={() => handleDeclineRequest(request.id)}
                         >
                           Từ chối
@@ -186,18 +166,18 @@ const FriendsPage = () => {
                   Bạn chưa có bạn bè nào.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {friends.map((friend) => (
                     <div
                       key={friend.id}
-                      className="bg-white dark:bg-gray-900 p-4 shadow rounded text-center"
+                      className="bg-white dark:bg-gray-800 p-4 shadow-md rounded-lg text-center"
                     >
                       <img
                         src={getAvatarUrl(friend.avatarUrl)}
                         alt={friend.fullName || 'Người dùng'}
-                        className="w-12 h-12 rounded-full mx-auto object-cover"
+                        className="w-16 h-16 rounded-full mx-auto object-cover"
                       />
-                      <h3 className="mt-2 text-center text-gray-800 dark:text-gray-200">
+                      <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
                         {friend.fullName || 'Ẩn danh'}
                       </h3>
                     </div>

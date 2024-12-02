@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate để điều hướng
+import { useNavigate } from 'react-router-dom';
 import { createPost } from '../../api/postApi';
 
 const CreatePost = ({ onPostCreated }) => {
@@ -7,13 +7,13 @@ const CreatePost = ({ onPostCreated }) => {
   const [files, setFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [error, setError] = useState(null);
-  const navigate = useNavigate(); // Khởi tạo navigate để điều hướng
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!content.trim() && files.length === 0) {
-      setError('Nội dung bài viết hoặc tệp đính kèm không được để trống');
+      setError('Vui lòng nhập nội dung hoặc thêm ít nhất một tệp.');
       return;
     }
 
@@ -22,9 +22,7 @@ const CreatePost = ({ onPostCreated }) => {
     formData.append('post', JSON.stringify(postDTO));
 
     if (files && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        formData.append('files', files[i]);
-      }
+      files.forEach((file) => formData.append('files', file));
     }
 
     try {
@@ -37,7 +35,7 @@ const CreatePost = ({ onPostCreated }) => {
     } catch (err) {
       console.error('Error creating post:', err);
       setError(
-        err.response?.data?.message || 'Không thể tạo bài viết. Vui lòng thử lại!'
+        err.response?.data?.message || 'Đã xảy ra lỗi khi tạo bài đăng. Vui lòng thử lại!'
       );
     }
   };
@@ -60,12 +58,8 @@ const CreatePost = ({ onPostCreated }) => {
 
   const removePreview = (index) => {
     URL.revokeObjectURL(previewUrls[index].url);
-    const updatedFiles = [...files];
-    const updatedPreviews = [...previewUrls];
-    updatedFiles.splice(index, 1);
-    updatedPreviews.splice(index, 1);
-    setFiles(updatedFiles);
-    setPreviewUrls(updatedPreviews);
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setPreviewUrls((prevUrls) => prevUrls.filter((_, i) => i !== index));
   };
 
   return (
@@ -77,7 +71,7 @@ const CreatePost = ({ onPostCreated }) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
 
         <input
           type="file"
@@ -90,7 +84,7 @@ const CreatePost = ({ onPostCreated }) => {
         {previewUrls.length > 0 && (
           <div className="mb-4">
             <h3 className="text-sm font-medium mb-4 text-primary dark:text-secondary">
-              Xem trước:
+              Tệp đính kèm:
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {previewUrls.map((preview, index) => (
@@ -110,7 +104,7 @@ const CreatePost = ({ onPostCreated }) => {
                   )}
                   <button
                     type="button"
-                    className="absolute top-1 right-1 bg-primary text-white rounded-full p-1 text-xs"
+                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 text-xs"
                     onClick={() => removePreview(index)}
                   >
                     ✕
@@ -121,8 +115,7 @@ const CreatePost = ({ onPostCreated }) => {
           </div>
         )}
 
-        <div className="flex justify-between">
- 
+        <div className="flex justify-end">
           <button
             type="submit"
             className="bg-primary text-white py-2 px-4 rounded hover:bg-primary/80 transition"

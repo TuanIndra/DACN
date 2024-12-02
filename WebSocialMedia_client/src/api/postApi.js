@@ -21,10 +21,14 @@ export const getPostById = (postId) => {
 
 // Cập nhật bài viết
 export const updatePost = (postId, updatedContent) => {
-  return axiosInstance.put(`/api/posts/${postId}`, { content: updatedContent }); // Thêm dấu `/` trước postId
+  return axiosInstance.put(`/api/posts/${postId}`, updatedContent, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 // Xóa bài viết
 export const deletePost = (postId) => {
-  return axiosInstance.delete(`/api/posts/${postId}`); // Thêm dấu `/` trước postId
+  return axiosInstance.delete(`/api/posts/${postId}`);
 };

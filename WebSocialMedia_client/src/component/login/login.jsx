@@ -12,36 +12,26 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(''); // Reset error message
+    setErrorMessage('');
   
     try {
       const response = await login(usernameOrEmail, password);
-      
-      // Debugging: Log the full response object
-      console.log('API Response:', response);
-      
-      // Extract the token from the correct location in the response
-      const token = response.data.token; // Update this line based on actual response structure
-      console.log('Login successful! Token:', token);
-      
-      // Save the token in localStorage
-      localStorage.setItem('token', token);
   
-      // Optionally, save the user ID or other user info if provided
-      const userId = response.data.userId; // Adjust if necessary
+      // Lấy `token` và `userId` từ phản hồi
+      const { token, userId } = response.data;
+  
+      // Lưu `token` và `userId` vào localStorage
+      localStorage.setItem('token', token);
       localStorage.setItem('userId', userId);
   
-      // Navigate to the homepage
-      navigate('/homepage'); 
+      // Điều hướng đến trang chủ
+      navigate('/homepage');
     } catch (error) {
       console.error('Login error:', error);
-      if (error.response && error.response.data) {
-        setErrorMessage(error.response.data.message || 'Đăng nhập thất bại!');
-      } else {
-        setErrorMessage('Có lỗi xảy ra. Vui lòng thử lại!');
-      }
+      setErrorMessage('Có lỗi xảy ra khi đăng nhập!');
     }
   };
+  
   
 
   return (
@@ -95,7 +85,7 @@ const Login = () => {
               />
               <span className="text-gray-700 dark:text-gray-300">Ghi nhớ tôi</span>
             </label>
-            <a href="#" className="text-sm text-primary hover:underline">Quên mật khẩu?</a>
+            <a href="forgot-password" className="text-sm text-primary hover:underline">Quên mật khẩu?</a>
           </div>
 
           <button

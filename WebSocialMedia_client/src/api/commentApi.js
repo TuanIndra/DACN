@@ -24,10 +24,12 @@ export const deleteComment = (commentId) => {
   return axiosInstance.delete(`/api/comments/${commentId}`);
 };
 
-// Cập nhật bình luận (nếu cần)
-export const updateComment = (commentId, newContent) => {
-  return axiosInstance.put(`/api/comments/${commentId}`, { content: newContent });
+export const updateComment = (commentId, updatedContent) => {
+  return axiosInstance.put(`/api/comments/${commentId}`, { content: updatedContent }); // Flat object with "content"
 };
+
+
+
 export const fetchCommentCount = (postId) => {
     return axiosInstance.get(`/api/posts/${postId}/comments/count`);
   };

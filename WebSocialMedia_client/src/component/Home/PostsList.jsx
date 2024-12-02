@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPosts } from '../../api/postApi';
-import { fetchCommentsByPostId, createComment } from '../../api/commentApi'; // API để lấy và tạo bình luận
+import { fetchPosts, updatePost, deletePost } from '../../api/postApi';
+import { fetchCommentsByPostId } from '../../api/commentApi';
+import { getReactionsCountForPost } from '../../api/reactionApi';
+import { getGroupDetails } from '../../api/groupApi';
+import MediaDisplay from '../Post/MediaDisplay';
+import PostHeader from './../Post/PostHeader';
+import CommentSection from '../Post/CommentSection';
+import ReactionButton from './ReactionButton';
 import { useNavigate } from 'react-router-dom';
 
 const PostsList = ({ onPostClick, userId }) => {
   const [posts, setPosts] = useState([]);
+  const [groups, setGroups] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [menuVisiblePostId, setMenuVisiblePostId] = useState(null);
+
+  const loggedInUserId = Number(localStorage.getItem('userId'));
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,31 +28,52 @@ const PostsList = ({ onPostClick, userId }) => {
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
 
-        // Lọc bài đăng theo `userId` nếu có
         if (userId) {
           sortedPosts = sortedPosts.filter((post) => post.user?.id === userId);
         }
 
-        // Lấy tất cả bình luận và tính tổng số bình luận cho từng bài viết
-        const postsWithComments = await Promise.all(
+        const groupIds = [...new Set(sortedPosts.map(post => post.groupId).filter(Boolean))];
+        const groupDetailsPromises = groupIds.map(groupId => getGroupDetails(groupId));
+        const groupDetailsResponses = await Promise.all(groupDetailsPromises);
+
+        const groupDetailsMap = {};
+        groupDetailsResponses.forEach(response => {
+          const group = response.data;
+          groupDetailsMap[group.id] = group;
+        });
+        setGroups(groupDetailsMap);
+
+        const postsWithDetails = await Promise.all(
           sortedPosts.map(async (post) => {
             try {
-              const commentsResponse = await fetchCommentsByPostId(post.id);
-              const comments = commentsResponse.data || []; // Tất cả bình luận
-              const totalComments = comments.reduce(
+              const [commentsResponse, reactionsResponse] = await Promise.all([
+                fetchCommentsByPostId(post.id),
+                getReactionsCountForPost(post.id),
+              ]);
+
+              const latestComment = commentsResponse.data[0] || null;
+
+              const totalComments = commentsResponse.data.reduce(
                 (count, comment) => count + 1 + (comment.replies?.length || 0),
                 0
-              ); // Đếm bình luận và trả lời
-              const latestComment = comments[0]; // Lấy bình luận mới nhất
-              return { ...post, latestComment, totalComments };
+              );
+
+              const group = post.groupId ? groupDetailsMap[post.groupId] : null;
+
+              return {
+                ...post,
+                totalComments,
+                likeCount: reactionsResponse.data['LIKE'] || 0,
+                latestComment,
+                group,
+              };
             } catch (error) {
-              console.error(`Error fetching comments for post ${post.id}:`, error);
-              return { ...post, latestComment: null, totalComments: 0 }; // Đặt mặc định
+              return { ...post, totalComments: 0, likeCount: 0, latestComment: null };
             }
           })
         );
 
-        setPosts(postsWithComments);
+        setPosts(postsWithDetails);
       } catch (err) {
         setError('Không thể tải danh sách bài viết');
       } finally {
@@ -52,131 +84,93 @@ const PostsList = ({ onPostClick, userId }) => {
     getPosts();
   }, [userId]);
 
-  const handleAddComment = async (postId, content) => {
-    if (!content.trim()) return;
+  const handleCommentClick = (post) => {
+    navigate(`/post/${post.id}`, { state: { post } });
+  };
 
+  const handleDeletePost = async (postId) => {
     try {
-      const response = await createComment(postId, { content });
-      const newComment = response.data;
-
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? { ...post, latestComment: newComment, totalComments: post.totalComments + 1 }
-            : post
-        )
-      );
+      await deletePost(postId);
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
     } catch (error) {
-      console.error(`Error adding comment to post ${postId}:`, error);
+      console.error('Error deleting post:', error);
     }
   };
 
-  const isVideo = (url) => {
-    const videoExtensions = ['.mp4', '.webm', '.ogg'];
-    return videoExtensions.some((ext) => url.endsWith(ext));
+  const handleReactionChange = (postId, newHasLiked, newLikeCount) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? { ...post, hasLiked: newHasLiked, likeCount: newLikeCount }
+          : post
+      )
+    );
   };
 
-  if (loading) return <p className="dark:text-white">Đang tải...</p>;
-  if (error) return <p className="dark:text-red-400">{error}</p>;
+  if (loading) return <p className="dark:text-gray-400 text-gray-600">Đang tải...</p>;
+  if (error) return <p className="text-red-500 dark:text-red-400">{error}</p>;
 
   return (
-    <div>
+    <div className="space-y-6">
       {posts.map((post) => (
         <div
           key={post.id}
-          className="bg-white dark:bg-gray-800 shadow-md rounded p-4 mb-4"
+          className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-4"
         >
-          {/* Thông tin người dùng */}
-          <div className="flex items-center mb-2">
-            <img
-              src={
-                post.user?.avatarUrl
-                  ? `http://localhost:8082/uploads/${post.user.avatarUrl}`
-                  : `http://localhost:8082/uploads/default-avatar.png`
-              }
-              alt={post.user?.fullName || 'User'}
-              className="w-10 h-10 rounded-full mr-3 cursor-pointer"
-              onClick={() => navigate(`/profile/${post.user?.id}`)} // Điều hướng tới trang cá nhân
-            />
-            <div>
-              <h3 className="font-bold dark:text-white">
-                {post.user?.fullName || 'Người dùng'}
-              </h3>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(post.createdAt).toLocaleString()}
-              </span>
-            </div>
-          </div>
+          {/* Header bài viết */}
+          <PostHeader
+            user={post.user}
+            group={post.group} // Truyền thông tin nhóm vào PostHeader
+            postId={post.id}
+            createdAt={post.createdAt}
+            isEditable={post.user?.id === loggedInUserId}
+            onEdit={(id) => setEditingPostId(id)}
+            onDelete={handleDeletePost}
+            menuVisiblePostId={menuVisiblePostId}
+            setMenuVisiblePostId={setMenuVisiblePostId}
+          />
 
           {/* Nội dung bài viết */}
-          <p className="dark:text-gray-300">{post.content}</p>
+          <p className="text-gray-800 dark:text-gray-300 text-lg">{post.content}</p>
 
-          {/* Hiển thị media */}
-          {post.mediaList && post.mediaList.length > 0 && (
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {post.mediaList.slice(0, 4).map((media, index) => (
-                <div key={media.id} className="relative">
-                  <div className="w-full h-[150px] md:h-[200px] overflow-hidden rounded">
-                    {isVideo(media.url) ? (
-                      <video
-                        controls
-                        src={`http://localhost:8082/uploads/${media.url}`}
-                        className="w-full h-full object-cover cursor-pointer"
-                      />
-                    ) : (
-                      <img
-                        src={`http://localhost:8082/uploads/${media.url}`}
-                        alt={`Media ${index + 1}`}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => onPostClick(post, index)} // Truyền index ảnh hiện tại
-                      />
-                    )}
-                    {index === 3 && post.mediaList.length > 4 && (
-                      <div
-                        className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-xl font-bold"
-                        onClick={() => onPostClick(post, index)}
-                      >
-                        +{post.mediaList.length - 4}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+          {/* Media */}
+          <MediaDisplay
+            mediaList={post.mediaList}
+            onMediaClick={(index) => onPostClick(post, index)}
+          />
+
+          {/* Latest comment */}
+          {post.latestComment && (
+            <div className="mt-4 p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+              <p className="text-lg font-semibold dark:text-gray-300 text-gray-700">
+                {post.latestComment.username}:
+              </p>
+              <p className="text-md dark:text-gray-400 text-gray-600 mt-2">
+                {post.latestComment.content}
+              </p>
             </div>
           )}
 
-          {/* Các thông tin khác */}
-          <div className="flex items-center mt-2 text-gray-500 dark:text-gray-400">
-            <span className="mr-4">{post.reactions?.length || 0} Thích</span>
-            <span className="mr-4">{post.totalComments || 0} Bình luận</span>
-            <span>{post.shares?.length || 0} Chia sẻ</span>
+          {/* Reactions and comments */}
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-gray-400">
+            <ReactionButton
+              postId={post.id}
+              initialHasLiked={post.hasLiked}
+              initialLikeCount={post.likeCount}
+              onReactionChange={handleReactionChange}
+            />
+            <span
+              className="cursor-pointer hover:underline"
+              onClick={() => handleCommentClick(post)}
+            >
+              {post.totalComments || 0} Bình luận
+            </span>
           </div>
 
-          {/* Bình luận mới nhất */}
-          {post.latestComment && (
-            <div className="mt-4 border p-2 rounded dark:bg-gray-700">
-              <div
-                className="cursor-pointer dark:text-white"
-                onClick={() => navigate(`/post/${post.id}`, { state: { post } })}
-              >
-                <p className="font-bold">{post.latestComment.username || 'Người dùng ẩn danh'}</p>
-                <p>{post.latestComment.content}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Thêm bình luận */}
-          <input
-            type="text"
-            className="w-full p-2 mt-2 border rounded dark:bg-gray-800 dark:text-white"
-            placeholder="Nhập bình luận..."
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAddComment(post.id, e.target.value);
-                e.target.value = ''; // Xóa nội dung ô nhập sau khi gửi
-              }
-            }}
+          {/* Comment Section */}
+          <CommentSection
+            postId={post.id}
+            totalComments={post.totalComments}
           />
         </div>
       ))}

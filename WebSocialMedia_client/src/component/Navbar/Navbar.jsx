@@ -7,6 +7,7 @@ import { HiOutlineUserGroup } from "react-icons/hi";
 import { MdOndemandVideo, MdNotificationsNone, MdNotifications, MdOutlineFeedback, MdOutlineSettings } from "react-icons/md";
 import { RxAvatar } from "react-icons/rx";
 import { FiLogOut } from "react-icons/fi";
+import SearchBar from "./SearchBar"
 import Darkmode from './Darkmode';
 
 const Navbar = () => {
@@ -20,7 +21,7 @@ const Navbar = () => {
     localStorage.clear();
     
     // Chuyển hướng đến trang đăng nhập
-    navigate('/');
+    navigate('/login');
   };
 
   return (
@@ -36,20 +37,15 @@ const Navbar = () => {
           </div>
           
           {/* Thanh tìm kiếm */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm"
-              className="w-64 rounded-full border px-4 py-2 focus:outline-none dark:bg-gray-800 dark:text-white"
-            />
-            <IoMdSearch className="text-gray-500 absolute top-1/2 -translate-y-1/2 right-3" />
-          </div>
+          <SearchBar />
 
           {/* Biểu tượng điều hướng */}
           <div className="flex items-center space-x-4">
+            <a href='friends'>
             <button className="group hover:bg-primary/30 p-2 rounded">
               <RiGroupLine className="text-primary w-8 h-8 group-hover:text-primary" />
             </button>
+            </a>
             <button className="group hover:bg-primary/30 p-2 rounded">
               <HiOutlineUserGroup className="text-primary w-8 h-8 group-hover:text-primary" />
             </button>
@@ -79,7 +75,7 @@ const Navbar = () => {
             </button>
             {dropdownOpen && (
               <div className="absolute top-12 right-0 bg-white dark:bg-gray-800 border rounded-lg shadow-md py-2 w-48">
-                <a href="/settings" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
+                <a href="/Settings" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
                   <MdOutlineSettings className="text-primary w-6 h-6 mr-2" />
                   Cài đặt
                 </a>

@@ -15,7 +15,9 @@ export const cancelFriendRequest = (friendshipId) => {
     params: { friendshipId },
   });
 };
-
+export const unfriend = (friendUsername) => {
+  return axiosInstance.delete(`/api/friends/${friendUsername}`);
+};
 // Chấp nhận yêu cầu kết bạn
 export const acceptFriendRequest = (friendshipId) => {
   return axiosInstance.post('/api/friends/accept', null, {
@@ -36,4 +38,7 @@ export const fetchPendingReceivedRequests = () => {
 // Lấy danh sách yêu cầu kết bạn đã gửi
 export const fetchPendingSentRequests = () => {
   return axiosInstance.get('/api/friends/pending/sent');
+};
+export const fetchFriendsByUserId = (userId) => {
+  return axiosInstance.get(`/api/friends/user/${userId}/friends`);
 };

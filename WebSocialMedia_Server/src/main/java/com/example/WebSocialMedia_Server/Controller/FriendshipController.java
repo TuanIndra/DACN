@@ -80,13 +80,13 @@ public class FriendshipController {
     }
 
     //huy kb
-    @DeleteMapping("/{friendUsername}")
+    @DeleteMapping("/{friendId}")
     public ResponseEntity<String> unfriend(
-            @PathVariable String friendUsername,
+            @PathVariable Long friendId, // Sử dụng Long cho ID
             Authentication authentication) {
 
-        String username = authentication.getName();
-        friendshipService.unfriend(username, friendUsername);
+        String username = authentication.getName(); // Lấy username của người đăng nhập
+        friendshipService.unfriendById(username, friendId); // Gọi service với friendId
 
         return ResponseEntity.ok("Friendship removed successfully");
     }

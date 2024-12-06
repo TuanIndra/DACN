@@ -214,4 +214,27 @@ public class FriendshipService {
         List<User> friends = friendshipRepository.findAcceptedFriendsByUserId(userId);
         return friends.stream().map(this::convertUserToDTO).collect(Collectors.toList());
     }
+
+    public void unfriendById(String username, Long friendId) {
+        // Lấy user từ username của người đăng nhập
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Lấy friend từ friendId
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new RuntimeException("Friend not found"));
+
+        // Kiểm tra quan hệ bạn bè
+        Optional<Friendship> friendship = friendshipRepository.findByRequesterAndAddressee(user, friend);
+        if (friendship.isEmpty()) {
+            friendship = friendshipRepository.findByAddresseeAndRequester(user, friend);
+        }
+
+        if (friendship.isEmpty()) {
+            throw new RuntimeException("Friendship not found");
+        }
+
+        // Xóa quan hệ bạn bè
+        friendshipRepository.delete(friendship.get());
+    }
 }

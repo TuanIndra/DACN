@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchPosts, updatePost, deletePost } from '../../api/postApi';
-import { fetchCommentsByPostId } from '../../api/commentApi';
+import { fetchCommentsByPostId, createComment } from '../../api/commentApi';
 import { getReactionsCountForPost } from '../../api/reactionApi';
 import { getGroupDetails } from '../../api/groupApi';
 import MediaDisplay from '../Post/MediaDisplay';
@@ -32,12 +32,12 @@ const PostsList = ({ onPostClick, userId }) => {
           sortedPosts = sortedPosts.filter((post) => post.user?.id === userId);
         }
 
-        const groupIds = [...new Set(sortedPosts.map(post => post.groupId).filter(Boolean))];
-        const groupDetailsPromises = groupIds.map(groupId => getGroupDetails(groupId));
+        const groupIds = [...new Set(sortedPosts.map((post) => post.groupId).filter(Boolean))];
+        const groupDetailsPromises = groupIds.map((groupId) => getGroupDetails(groupId));
         const groupDetailsResponses = await Promise.all(groupDetailsPromises);
 
         const groupDetailsMap = {};
-        groupDetailsResponses.forEach(response => {
+        groupDetailsResponses.forEach((response) => {
           const group = response.data;
           groupDetailsMap[group.id] = group;
         });
@@ -53,10 +53,7 @@ const PostsList = ({ onPostClick, userId }) => {
 
               const latestComment = commentsResponse.data[0] || null;
 
-              const totalComments = commentsResponse.data.reduce(
-                (count, comment) => count + 1 + (comment.replies?.length || 0),
-                0
-              );
+              const totalComments = commentsResponse.data.length;
 
               const group = post.groupId ? groupDetailsMap[post.groupId] : null;
 
@@ -84,6 +81,12 @@ const PostsList = ({ onPostClick, userId }) => {
     getPosts();
   }, [userId]);
 
+  const handlePostClick = (post, index) => {
+    navigate(`/post/${post.id}`, {
+      state: { post, currentMediaIndex: index },
+    });
+  };
+
   const handleCommentClick = (post) => {
     navigate(`/post/${post.id}`, { state: { post } });
   };
@@ -100,9 +103,7 @@ const PostsList = ({ onPostClick, userId }) => {
   const handleReactionChange = (postId, newHasLiked, newLikeCount) => {
     setPosts((prevPosts) =>
       prevPosts.map((post) =>
-        post.id === postId
-          ? { ...post, hasLiked: newHasLiked, likeCount: newLikeCount }
-          : post
+        post.id === postId ? { ...post, hasLiked: newHasLiked, likeCount: newLikeCount } : post
       )
     );
   };
@@ -120,7 +121,7 @@ const PostsList = ({ onPostClick, userId }) => {
           {/* Header bài viết */}
           <PostHeader
             user={post.user}
-            group={post.group} // Truyền thông tin nhóm vào PostHeader
+            group={post.group}
             postId={post.id}
             createdAt={post.createdAt}
             isEditable={post.user?.id === loggedInUserId}
@@ -136,7 +137,7 @@ const PostsList = ({ onPostClick, userId }) => {
           {/* Media */}
           <MediaDisplay
             mediaList={post.mediaList}
-            onMediaClick={(index) => onPostClick(post, index)}
+            onMediaClick={(index) => handlePostClick(post, index)}
           />
 
           {/* Latest comment */}
@@ -167,10 +168,15 @@ const PostsList = ({ onPostClick, userId }) => {
             </span>
           </div>
 
-          {/* Comment Section */}
+          {/* Add New Comment */}
           <CommentSection
             postId={post.id}
-            totalComments={post.totalComments}
+            latestComment={post.latestComment}
+            loggedInUserId={loggedInUserId}
+            handleAddComment={async (postId, content) => {
+              await createComment(postId, { content });
+              // Optionally refresh comments here
+            }}
           />
         </div>
       ))}

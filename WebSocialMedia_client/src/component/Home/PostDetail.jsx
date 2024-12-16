@@ -62,6 +62,20 @@ const PostDetail = () => {
     setLikeCount(newLikeCount);
   };
 
+  const handleNextMedia = () => {
+    if (post.mediaList) {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % post.mediaList.length);
+    }
+  };
+
+  const handlePreviousMedia = () => {
+    if (post.mediaList) {
+      setCurrentImageIndex((prevIndex) =>
+        (prevIndex - 1 + post.mediaList.length) % post.mediaList.length
+      );
+    }
+  };
+
   if (!post) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -79,13 +93,31 @@ const PostDetail = () => {
   return (
     <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900">
       {/* Media Section */}
-      <div className="w-[65%] flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg">
+      <div className="w-[65%] flex flex-col items-center justify-center bg-white dark:bg-gray-800 shadow-lg relative">
         {post.mediaList?.length > 0 && (
           <img
             src={`http://localhost:8082/uploads/${post.mediaList[currentImageIndex]?.url}`}
             alt="Post Media"
             className="max-h-full w-auto object-contain"
           />
+        )}
+
+        {/* Media Navigation */}
+        {post.mediaList?.length > 1 && (
+          <>
+            <button
+              onClick={handlePreviousMedia}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white px-3 py-1 rounded-full hover:bg-gray-600"
+            >
+              ←
+            </button>
+            <button
+              onClick={handleNextMedia}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white px-3 py-1 rounded-full hover:bg-gray-600"
+            >
+              →
+            </button>
+          </>
         )}
       </div>
 

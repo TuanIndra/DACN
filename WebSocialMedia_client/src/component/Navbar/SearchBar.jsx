@@ -94,7 +94,7 @@ const SearchBar = () => {
                   onClick={() => handleResultClick(user, 'user')}
                 >
                   <img
-                    src={getAvatarUrl(user.avatarUrl) }
+                    src={getAvatarUrl(user.avatarUrl)}
                     alt={user.fullName || 'User'}
                     className="w-8 h-8 rounded-full mr-2 object-cover"
                   />

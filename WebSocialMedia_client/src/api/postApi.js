@@ -29,6 +29,6 @@ export const updatePost = (postId, updatedContent) => {
 };
 
 // Xóa bài viết
-export const deletePost = (postId) => {
+export const deletePost = (postId) => { 
   return axiosInstance.delete(`/api/posts/${postId}`);
 };

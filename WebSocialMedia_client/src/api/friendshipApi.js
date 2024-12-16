@@ -15,8 +15,8 @@ export const cancelFriendRequest = (friendshipId) => {
     params: { friendshipId },
   });
 };
-export const unfriend = (friendUsername) => {
-  return axiosInstance.delete(`/api/friends/${friendUsername}`);
+export const unfriend = (friendId) => {
+  return axiosInstance.delete(`/api/friends/${friendId}`);
 };
 // Chấp nhận yêu cầu kết bạn
 export const acceptFriendRequest = (friendshipId) => {

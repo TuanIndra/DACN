@@ -1,38 +1,64 @@
+// src/components/Login/Login.js
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../api/authApi'; // Import the login API function
 import logo from "../../assets/logo.jpg";
-import { FaFacebookF, FaGoogle, FaTwitter } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import app from "../../../firebaseConfig";
+import { login } from "../../api/authApi"; // Login API function
 
 const Login = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-  const handleSubmit = async (e) => {
+  // Đăng nhập bằng Google
+  const signInWithGoogle = () => {
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        const user = result.user;
+
+        // Lưu thông tin người dùng từ Firebase
+        console.log("Đăng nhập thành công:", user);
+
+        // Điều hướng đến trang chính
+        localStorage.setItem('user', JSON.stringify({
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+        }));
+        navigate('/homepage');
+      })
+      .catch((error) => {
+        console.error("Lỗi đăng nhập:", error);
+        setErrorMessage('Lỗi đăng nhập với Google. Vui lòng thử lại.');
+      });
+  };
+
+  // Đăng nhập bằng tài khoản cơ sở dữ liệu
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
-  
     try {
       const response = await login(usernameOrEmail, password);
-  
-      // Lấy `token` và `userId` từ phản hồi
+
+      // Lưu thông tin đăng nhập vào localStorage
       const { token, userId } = response.data;
-  
-      // Lưu `token` và `userId` vào localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('userId', userId);
-  
-      // Điều hướng đến trang chủ
+
+      // Điều hướng đến trang chính
       navigate('/homepage');
     } catch (error) {
       console.error('Login error:', error);
-      setErrorMessage('Có lỗi xảy ra khi đăng nhập!');
+      setErrorMessage('Tên đăng nhập hoặc mật khẩu không chính xác!');
     }
   };
-  
-  
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col justify-center items-center">
@@ -50,9 +76,12 @@ const Login = () => {
           <p className="text-red-500 text-center mb-4">{errorMessage}</p>
         )}
 
-        <form onSubmit={handleSubmit}>
+        {/* Login bằng username và mật khẩu */}
+        <form onSubmit={handleLoginSubmit}>
           <div className="mb-4">
-            <label htmlFor="usernameOrEmail" className="block text-gray-700 dark:text-gray-300">Tên đăng nhập hoặc Email</label>
+            <label htmlFor="usernameOrEmail" className="block text-gray-700 dark:text-gray-300">
+              Tên đăng nhập hoặc Email
+            </label>
             <input
               type="text"
               id="usernameOrEmail"
@@ -85,7 +114,13 @@ const Login = () => {
               />
               <span className="text-gray-700 dark:text-gray-300">Ghi nhớ tôi</span>
             </label>
-            <a href="forgot-password" className="text-sm text-primary hover:underline">Quên mật khẩu?</a>
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')} // Điều hướng đến trang Quên mật khẩu
+              className="text-sm text-primary hover:underline"
+            >
+              Quên mật khẩu?
+            </button>
           </div>
 
           <button
@@ -96,23 +131,18 @@ const Login = () => {
           </button>
         </form>
 
+        {/* Đăng nhập với Google */}
         <div className="mt-6 text-center">
           <p className="text-gray-700 dark:text-gray-300 mb-4">Hoặc đăng nhập với</p>
-          <div className="flex justify-center space-x-4">
-            <button className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700">
-              <FaFacebookF className="w-6 h-6" />
-            </button>
-            <button className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700">
+          <div className="flex justify-center">
+            <button onClick={signInWithGoogle} className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700">
               <FaGoogle className="w-6 h-6" />
-            </button>
-            <button className="bg-blue-400 text-white p-3 rounded-full hover:bg-blue-500">
-              <FaTwitter className="w-6 h-6" />
             </button>
           </div>
         </div>
 
         <p className="mt-6 text-center text-gray-700 dark:text-gray-300">
-          Bạn chưa có tài khoản? 
+          Bạn chưa có tài khoản?
           <a href="/register" className="text-primary hover:underline ml-2">Đăng ký ngay</a>
         </p>
       </div>

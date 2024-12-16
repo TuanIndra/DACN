@@ -32,9 +32,7 @@ const GroupPosts = ({ groupId }) => {
 
   return (
     <div>
-    
 
-     
       {/* Pass the posts to GroupPostList */}
       <GroupPostList posts={posts} />
     </div>

@@ -4,6 +4,7 @@ import Login from './component/login/login';
 import Homepage from './component/Home/homePage';
 import Register from './component/login/register';
 import PostDetail from './component/Home/PostDetail';
+import ChatPage from './component/Chat/ChatPage';
 import FriendsPage from './component/Friend/FriendsPage';
 import Profile from './component/Profile/profile';
 import ForgotPassword from './component/login/ForgotPassword';
@@ -14,26 +15,11 @@ import GroupList from './component/Group/GroupList';
 import GroupDetailPage from './component/Group/GroupDetailPage';
 import CreateGroup from './component/Group/CreateGroup';
 import { AuthProvider } from '../src/component/context/AuthContext';
-import MessagePage from './component/Message/MessagePage';
 import NotificationList from './component/Notifications/NotificationsList';
 import FeedbackPage from './component/Home/FeedbackPage';
 import Page404 from './component/Home/Page404';
 const App = () => {
   const userId = localStorage.getItem('userId');
-
-  // Validate the userId existence
-  if (!userId) {
-    console.warn('No userId found in localStorage. Redirecting to login.');
-    // Optionally redirect to the login page
-    return (
-      <Router>
-        <Routes>
-          <Route path="*" element={<Login />} />
-        </Routes>
-      </Router>
-    );
-  }
-
   return (
     <AuthProvider>
       <Router>
@@ -51,7 +37,8 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/groups" element={<GroupList />} />
-          <Route path="/messages/:receiverId" element={<MessagePage />} />
+          <Route path="/chat/:receiverId" element={<ChatPage />} />
+         
           <Route path="/notifications" element={<NotificationList userId={userId} />} />
           <Route path="/groups/create" element={<CreateGroup />} />
           <Route path="/groups/:groupId" element={<GroupDetailPage />} />

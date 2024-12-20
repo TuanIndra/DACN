@@ -4,7 +4,8 @@ import axios from 'axios';
 
 // Create an Axios instance with the base URL of your backend API
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8082', // Replace with your backend URL if different
+  baseURL: 'http://26.159.243.47:8082', // Sử dụng IP Radmin VPN
+  withCredentials: true,
 });
 
 // Add a request interceptor to include the token in every request

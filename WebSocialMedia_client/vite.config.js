@@ -6,5 +6,9 @@ export default defineConfig({
   plugins: [react()],
   define: {
     global: {}
+  },
+  server: {
+    host: '0.0.0.0', // hoặc host: '0.0.0.0'
+    port: 5173 // cổng mặc định
   }
 })

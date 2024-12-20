@@ -109,10 +109,18 @@ const Navbar = () => {
             </button>
             {dropdownOpen && (
               <div className="absolute top-12 right-0 bg-white dark:bg-gray-800 border rounded-lg shadow-md py-2 w-48">
+                <a
+                  href={`/profile/${userId}`}
+                  className="flex items-center px-4 py-2 hover:bg-primary/30 rounded"
+                >
+                  <RxAvatar className="text-primary w-6 h-6 mr-2" />
+                  Trang cá nhân
+                </a>
                 <a href="/settings" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
                   <MdOutlineSettings className="text-primary w-6 h-6 mr-2" />
                   Cài đặt
                 </a>
+
                 <a href="/feedback" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
                   <MdOutlineFeedback className="text-primary w-6 h-6 mr-2" />
                   Góp ý

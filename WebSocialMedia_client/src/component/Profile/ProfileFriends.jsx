@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { fetchFriendsByUserId } from '../../api/friendshipApi';
 
 const getAvatarUrl = (avatarUrl) => {
-  const defaultAvatarUrl = 'http://localhost:8082/uploads/default-avatar.png';
+  const defaultAvatarUrl = 'http://26.159.243.47:8082/uploads/default-avatar.png';
   if (!avatarUrl || avatarUrl === defaultAvatarUrl) {
     return defaultAvatarUrl;
   }
   const cleanedUrl = avatarUrl.replace(/\/{2,}/g, '/');
   return avatarUrl.startsWith('http')
     ? cleanedUrl
-    : `http://localhost:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
+    : `http://26.159.243.47:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
 };
 
 const ProfileFriends = ({ userId }) => {

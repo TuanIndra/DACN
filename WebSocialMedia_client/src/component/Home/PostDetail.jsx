@@ -96,7 +96,7 @@ const PostDetail = () => {
       <div className="w-[65%] flex flex-col items-center justify-center bg-white dark:bg-gray-800 shadow-lg relative">
         {post.mediaList?.length > 0 && (
           <img
-            src={`http://localhost:8082/uploads/${post.mediaList[currentImageIndex]?.url}`}
+            src={`http://26.159.243.47:8082/uploads/${post.mediaList[currentImageIndex]?.url}`}
             alt="Post Media"
             className="max-h-full w-auto object-contain"
           />
@@ -144,44 +144,48 @@ const PostDetail = () => {
         </div>
 
         {/* Comments Section */}
-        <div className="flex-grow overflow-y-auto">
-          <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Bình luận</h4>
-          {loadingComments ? (
-            <p className="text-gray-500 dark:text-gray-400">Đang tải bình luận...</p>
-          ) : (
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-700">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(comment.createdAt).toLocaleString()}
-                  </p>
-                  <p className="font-semibold dark:text-white">{comment.username || 'Người dùng ẩn danh'}</p>
-                  <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
-                  <button
-                    onClick={() => handleReplyToComment(comment.id)}
-                    className="mt-2 text-blue-500 dark:text-blue-300 hover:underline"
-                  >
-                    Trả lời
-                  </button>
+        <div className="flex-grow overflow-y-auto max-h-96">
+  <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Bình luận</h4>
+  {loadingComments ? (
+    <p className="text-gray-500 dark:text-gray-400">Đang tải bình luận...</p>
+  ) : (
+    <div className="space-y-4">
+      {comments
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sắp xếp từ mới nhất đến cũ nhất
+        .slice(0, 10) // Hiển thị tối đa 10 bình luận
+        .map((comment) => (
+          <div key={comment.id} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {new Date(comment.createdAt).toLocaleString()}
+            </p>
+            <p className="font-semibold dark:text-white">{comment.username || 'Người dùng ẩn danh'}</p>
+            <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
+            <button
+              onClick={() => handleReplyToComment(comment.id)}
+              className="mt-2 text-blue-500 dark:text-blue-300 hover:underline"
+            >
+              Trả lời
+            </button>
 
-                  {comment.replies?.length > 0 && (
-                    <div className="ml-4 mt-2 space-y-2">
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="p-2 border rounded-lg bg-gray-100 dark:bg-gray-900">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(reply.createdAt).toLocaleString()}
-                          </p>
-                          <p className="font-semibold dark:text-primary">{reply.username || 'Người dùng ẩn danh'}</p>
-                          <p className="mt-1 text-gray-700 dark:text-gray-300">{reply.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            {comment.replies?.length > 0 && (
+              <div className="ml-4 mt-2 space-y-2">
+                {comment.replies.map((reply) => (
+                  <div key={reply.id} className="p-2 border rounded-lg bg-gray-100 dark:bg-gray-900">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(reply.createdAt).toLocaleString()}
+                    </p>
+                    <p className="font-semibold dark:text-primary">{reply.username || 'Người dùng ẩn danh'}</p>
+                    <p className="mt-1 text-gray-700 dark:text-gray-300">{reply.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+    </div>
+  )}
+</div>
+
 
         {/* Add Comment Section */}
         <div className="mt-4">

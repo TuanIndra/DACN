@@ -3,7 +3,7 @@ import { updateAvatar } from '../../api/authApi';
 
 const getAvatarUrl = (avatarUrl) => {
     // URL for the default avatar in the database
-    const defaultAvatarUrl = 'http://localhost:8082/uploads/default-avatar.png';
+    const defaultAvatarUrl = 'http://26.159.243.47:8082/uploads/default-avatar.png';
 
     // If the avatar is null, empty, or matches the default avatar URL, return a default avatar
     if (!avatarUrl || avatarUrl === defaultAvatarUrl) {
@@ -15,7 +15,7 @@ const getAvatarUrl = (avatarUrl) => {
     const cleanedUrl = avatarUrl.replace(/\/{2,}/g, '/');
     return avatarUrl.startsWith('http')
       ? cleanedUrl // Use full URL if provided
-      : `http://localhost:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
+      : `http://26.159.243.47:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
       console.log('Final resolved avatarUrl:', finalUrl); // Log the resolved URL
   };
 

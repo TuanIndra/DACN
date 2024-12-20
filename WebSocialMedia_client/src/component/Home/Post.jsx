@@ -35,7 +35,7 @@ const Post = ({ post, onPostClick, loggedInUserId, onPostUpdate, onPostDelete })
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
           <img
-            src={post.user?.avatarUrl ? `http://localhost:8082/uploads/${post.user.avatarUrl}` : `http://localhost:8082/uploads/default-avatar.png`}
+            src={post.user?.avatarUrl ? `http://26.159.243.47:8082/uploads/${post.user.avatarUrl}` : `http://localhost:8082/uploads/default-avatar.png`}
             alt={post.user?.fullName || 'User'}
             className="w-10 h-10 rounded-full mr-3 cursor-pointer"
             onClick={() => onPostClick(post)}
@@ -111,7 +111,7 @@ const Post = ({ post, onPostClick, loggedInUserId, onPostUpdate, onPostDelete })
       </div>
 
       {/* Comments */}
-      <Comments postId={post.id} latestComment={post.latestComment} />
+      {/*<Comments postId={post.id} latestComment={post.latestComment} />*/}
     </div>
   );
 };

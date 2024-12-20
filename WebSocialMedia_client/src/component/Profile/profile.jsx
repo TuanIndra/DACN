@@ -61,7 +61,7 @@ const Profile = () => {
             />
             {/* Friend Request Button */}
             {loggedInUserId !== profile.id && (
-              <div className="mt-6 flex justify-center">
+              <div className="mt-6 flex justify-end">
                 <div className="w-full sm:w-auto flex justify-center">
                   <FriendRequestButton currentUserId={profile.id} />
                 </div>

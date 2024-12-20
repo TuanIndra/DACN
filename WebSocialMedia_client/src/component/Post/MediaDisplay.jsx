@@ -16,12 +16,12 @@ const MediaDisplay = ({ mediaList, onMediaClick }) => {
         {isVideo(media.url) ? (
           <video
             controls
-            src={`http://localhost:8082/uploads/${media.url}`}
+            src={`http://26.159.243.47:8082/uploads/${media.url}`}
             className="w-full h-auto object-cover cursor-pointer"
           />
         ) : (
           <img
-            src={`http://localhost:8082/uploads/${media.url}`}
+            src={`http://26.159.243.47:8082/uploads/${media.url}`}
             alt="Single Media"
             className="w-full h-auto object-cover cursor-pointer"
             onClick={() => onMediaClick(0)}
@@ -40,12 +40,12 @@ const MediaDisplay = ({ mediaList, onMediaClick }) => {
             {isVideo(media.url) ? (
               <video
                 controls
-                src={`http://localhost:8082/uploads/${media.url}`}
+                src={`http://26.159.243.47:8082/uploads/${media.url}`}
                 className="w-full h-full object-cover cursor-pointer"
               />
             ) : (
               <img
-                src={`http://localhost:8082/uploads/${media.url}`}
+                src={`http://26.159.243.47:8082/uploads/${media.url}`}
                 alt={`Media ${index + 1}`}
                 className="w-full h-full object-cover cursor-pointer"
                 onClick={() => onMediaClick(index)}

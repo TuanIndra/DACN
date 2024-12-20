@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register } from '../../api/authApi'; // Import the register API function
+import { register } from '../../api/authApi';
 import logo from "../../assets/logo.jpg";
+import spinner from "../../assets/spinner.gif"; // Spinner GIF
+import successIcon from "../../assets/success.png"; // Success Icon
 
 const Register = () => {
   const [fullName, setFullName] = useState('');
@@ -11,14 +13,32 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [isSuccess, setIsSuccess] = useState(false); // Success state
   const navigate = useNavigate();
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Clear previous messages
     setErrorMessage('');
     setSuccessMessage('');
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      setErrorMessage('Email không hợp lệ!');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+      setErrorMessage('Mật khẩu phải có ít nhất 8 ký tự!');
+      return;
+    }
 
     // Validate password and confirmation
     if (password !== confirmPassword) {
@@ -26,32 +46,25 @@ const Register = () => {
       return;
     }
 
+    setIsLoading(true); // Show loading popup
+
     try {
-      const response = await register(fullName, username, email, password);
+      await register(fullName, username, email, password);
 
       // On successful registration
+      setIsLoading(false); // Hide loading
+      setIsSuccess(true); // Show success popup
       setSuccessMessage('Đăng ký thành công! Vui lòng xác thực email của bạn.');
+
       setTimeout(() => {
-        navigate('/'); // Redirect to login page
-      }, 3000); // Wait for 3 seconds before redirecting
+        navigate('/login'); // Redirect to login page
+      }, 3000);
     } catch (error) {
-      // Handle errors returned by the backend or network issues
-      if (error.response) {
-        // Backend returned an error response
-        if (error.response.data.message) {
-          setErrorMessage(error.response.data.message);
-        } else if (error.response.data.errors) {
-          // If backend provides specific validation errors
-          const errors = error.response.data.errors;
-          setErrorMessage(errors.join(' '));
-        } else {
-          setErrorMessage('Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.');
-        }
-      } else if (error.request) {
-        // Network error or no response received
-        setErrorMessage('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
+      setIsLoading(false);
+      setIsSuccess(false);
+      if (error.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
       } else {
-        // Unexpected error
         setErrorMessage('Đã xảy ra lỗi. Vui lòng thử lại.');
       }
     }
@@ -59,6 +72,27 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col justify-center items-center">
+      {/* Loading Popup */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+            <img src={spinner} alt="Loading..." className="w-12 h-12 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-800 dark:text-white">Đang xử lý... Vui lòng đợi.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Success Popup */}
+      {isSuccess && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+            <img src={successIcon} alt="Success" className="w-16 h-16 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-green-600">Đăng ký thành công!</p>
+            <p className="text-gray-700 dark:text-gray-300">Vui lòng kiểm tra email để xác thực tài khoản.</p>
+          </div>
+        </div>
+      )}
+
       {/* Logo */}
       <div className="flex items-center mb-8">
         <img src={logo} alt="logo" className="w-16 h-16 rounded-full border-2 border-black" />

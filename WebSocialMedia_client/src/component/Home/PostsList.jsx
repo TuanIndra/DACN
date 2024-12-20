@@ -141,16 +141,7 @@ const PostsList = ({ onPostClick, userId }) => {
           />
 
           {/* Latest comment */}
-          {post.latestComment && (
-            <div className="mt-4 p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-              <p className="text-lg font-semibold dark:text-gray-300 text-gray-700">
-                {post.latestComment.username}:
-              </p>
-              <p className="text-md dark:text-gray-400 text-gray-600 mt-2">
-                {post.latestComment.content}
-              </p>
-            </div>
-          )}
+          
 
           {/* Reactions and comments */}
           <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -158,8 +149,10 @@ const PostsList = ({ onPostClick, userId }) => {
               postId={post.id}
               initialHasLiked={post.hasLiked}
               initialLikeCount={post.likeCount}
+              postAuthorId={post.user?.id} // Truyền thêm ID của người tạo bài viết
               onReactionChange={handleReactionChange}
             />
+
             <span
               className="cursor-pointer hover:underline"
               onClick={() => handleCommentClick(post)}

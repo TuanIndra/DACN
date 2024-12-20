@@ -1,14 +1,25 @@
-// src/api/messageApi.js
 import axiosInstance from '../utils/axiosConfig';
 
-// Lấy lịch sử tin nhắn
-export const getConversation = async (userId) => {
-  const response = await axiosInstance.get(`/api/messages/conversation/${userId}`);
+// Gửi tin nhắn
+export const sendMessage = async (senderId, receiverId, content) => {
+  const response = await axiosInstance.post(
+    `/api/messages/send?senderId=${senderId}&receiverId=${receiverId}&content=${encodeURIComponent(content)}`
+  );
   return response.data;
 };
 
-// Gửi tin nhắn qua STOMP
-export const sendMessageStomp = (stompClient, receiverId, content) => {
-  // payload: {receiverId, content}
-  stompClient.send('/app/message.send', {}, JSON.stringify({ receiverId, content }));
+// Lấy toàn bộ hội thoại (không bắt buộc, nếu cần)
+export const getConversation = async (receiverId, senderId) => {
+  const response = await axiosInstance.get(`/api/messages/conversation/${receiverId}`, {
+    params: { senderId }
+  });
+  return response.data;
+};
+
+// Long poll để nhận tin nhắn mới
+export const longPollMessages = async (senderId, receiverId) => {
+  const response = await axiosInstance.get(`/api/messages/long-poll`, {
+    params: { senderId, receiverId },
+  });
+  return response.data;
 };

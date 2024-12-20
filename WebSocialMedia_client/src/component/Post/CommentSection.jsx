@@ -3,8 +3,9 @@ import {
   fetchCommentsByPostId,
   createComment,
 } from '../../api/commentApi';
+import { createNotification } from '../../api/notificationsApi';
 
-const CommentSection = ({ postId, loggedInUserId }) => {
+const CommentSection = ({ postId, postAuthorId, loggedInUserId }) => {
   const [latestComment, setLatestComment] = useState(null); // State for the latest comment
   const [newComment, setNewComment] = useState(''); // State for new comment input
   const [totalComments, setTotalComments] = useState(0); // Total comments count
@@ -42,6 +43,12 @@ const CommentSection = ({ postId, loggedInUserId }) => {
       };
 
       const response = await createComment(postId, newCommentObj);
+
+      // Gửi thông báo COMMENT
+      if (postAuthorId && loggedInUserId !== postAuthorId) {
+        await createNotification(postAuthorId, 'COMMENT', postId);
+      }
+
       setLatestComment(response.data); // Update the latest comment
       setTotalComments((prev) => prev + 1); // Increment the total comments count
       setNewComment(''); // Reset input
@@ -70,13 +77,9 @@ const CommentSection = ({ postId, loggedInUserId }) => {
 
       {/* Latest comment */}
       {latestComment && (
-        <div className="mt-4 p-3 border rounded bg-white dark:bg-gray-700 shadow-sm">
-          <p className="font-bold text-gray-800 dark:text-white">
-            {latestComment.username || 'Người dùng ẩn danh'}
-          </p>
-          <p className="text-gray-700 dark:text-gray-300">{latestComment.content}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {new Date(latestComment.createdAt).toLocaleString()}
+        <div className="mt-2">
+          <p className="text-gray-700 dark:text-gray-300 text-sm">
+            <span className="font-bold">{latestComment.username}</span>: {latestComment.content}
           </p>
         </div>
       )}

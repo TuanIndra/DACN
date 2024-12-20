@@ -4,8 +4,9 @@ import {
   cancelFriendRequest,
   fetchPendingSentRequests,
   fetchAcceptedFriends,
-  unfriend, // Thêm API hủy kết bạn
+  unfriend,
 } from '../../api/friendshipApi';
+import { createNotification } from '../../api/notificationsApi';
 
 const FriendRequestButton = ({ currentUserId }) => {
   const [friendshipStatus, setFriendshipStatus] = useState('none'); // "friend", "pendingSent", "none"
@@ -56,6 +57,9 @@ const FriendRequestButton = ({ currentUserId }) => {
     try {
       await sendFriendRequest(currentUserId);
       setFriendshipStatus('pendingSent');
+
+      // Gửi thông báo FRIEND_REQUEST
+      await createNotification(currentUserId, 'FRIEND_REQUEST', loggedInUserId);
 
       // Lấy lại ID yêu cầu sau khi gửi
       const pendingSentResponse = await fetchPendingSentRequests();

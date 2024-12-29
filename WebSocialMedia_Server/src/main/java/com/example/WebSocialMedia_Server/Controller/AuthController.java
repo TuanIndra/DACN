@@ -126,11 +126,11 @@ public class AuthController {
     @GetMapping("/reset-password")
     public ResponseEntity<String> resetPasswordPage(@RequestParam("token") String token) {
         // Redirect người dùng đến trang frontend để nhập mật khẩu mới
-        String frontendResetUrl = "http://localhost:5173/reset-password?token=" + token;
+        String frontendResetUrl = "http://26.159.243.47:5173/reset-password?token=" + token;
         return ResponseEntity.status(HttpStatus.FOUND).header("Location", frontendResetUrl).build();
     }
 
-    //doi anh dai dien
+    //doi anh dai dienss
     @PutMapping("/avatar")
     public ResponseEntity<UserDTO> updateAvatar(
             @RequestParam("file") MultipartFile file,

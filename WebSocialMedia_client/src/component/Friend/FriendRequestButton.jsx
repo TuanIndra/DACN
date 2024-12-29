@@ -7,12 +7,14 @@ import {
   unfriend,
 } from '../../api/friendshipApi';
 import { createNotification } from '../../api/notificationsApi';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate để chuyển trang
 
 const FriendRequestButton = ({ currentUserId }) => {
   const [friendshipStatus, setFriendshipStatus] = useState('none'); // "friend", "pendingSent", "none"
   const [friendshipId, setFriendshipId] = useState(null);
 
   const loggedInUserId = parseInt(localStorage.getItem('userId'), 10) || 0;
+  const navigate = useNavigate(); // Khởi tạo useNavigate
 
   useEffect(() => {
     const fetchFriendshipStatus = async () => {
@@ -97,6 +99,10 @@ const FriendRequestButton = ({ currentUserId }) => {
     }
   };
 
+  const handleChat = () => {
+    navigate(`/chat/${currentUserId}`); // Chuyển đến trang chat với người dùng
+  };
+
   if (loggedInUserId === currentUserId) {
     return null; // Không hiển thị nút cho chính người dùng
   }
@@ -105,7 +111,12 @@ const FriendRequestButton = ({ currentUserId }) => {
     <div className="mt-4 flex items-center gap-2">
       {friendshipStatus === 'friend' ? (
         <>
-          <span className="text-green-600 font-semibold">Bạn bè</span>
+          <button
+            className="bg-secondary text-primary px-4 py-2 rounded hover:bg-secondary/90 transition"
+            onClick={handleChat}
+          >
+            Chat
+          </button>
           <button
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-400 transition"
             onClick={handleUnfriend}

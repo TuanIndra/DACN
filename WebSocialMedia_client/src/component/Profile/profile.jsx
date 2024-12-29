@@ -12,6 +12,7 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('posts');
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const loggedInUserId = parseInt(localStorage.getItem('userId'), 10) || 0;
@@ -33,10 +34,16 @@ const Profile = () => {
     fetchProfileData();
   }, [userId]);
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setTabLoading(true);
+    setTimeout(() => setTabLoading(false), 300); // Thời gian chuyển đổi tab
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-100 dark:bg-gray-900">
-        <p className="text-gray-500 dark:text-gray-400">Đang tải...</p>
+        <p className="text-gray-500 dark:text-gray-400 animate-pulse">Đang tải...</p>
       </div>
     );
 
@@ -72,12 +79,20 @@ const Profile = () => {
 
         {/* Tabs Section */}
         <div className="mt-6">
-          <ProfileTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            userId={userId}
-            navigate={navigate}
-          />
+          {tabLoading ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500 dark:text-gray-400 animate-pulse">
+                Đang tải nội dung...
+              </p>
+            </div>
+          ) : (
+            <ProfileTabs
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              userId={userId}
+              navigate={navigate}
+            />
+          )}
         </div>
       </div>
     </div>

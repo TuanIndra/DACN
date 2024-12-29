@@ -15,14 +15,14 @@ const GroupDetailPage = () => {
   const [userIsAdmin, setUserIsAdmin] = useState(false);
 
   const getAvatarUrl = (imageUrl) => {
-    const defaultAvatarUrl = 'http://localhost:8082/uploads/default-avatar.png';
+    const defaultAvatarUrl = 'http://26.159.243.47:8082/uploads/default-avatar.png';
     if (!imageUrl || imageUrl === defaultAvatarUrl) {
       return defaultAvatarUrl;
     }
     const cleanedUrl = imageUrl.replace(/\/{2,}/g, '/');
     return imageUrl.startsWith('http')
       ? cleanedUrl
-      : `http://localhost:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
+      : `http://26.159.243.47:8082/uploads${cleanedUrl.replace('/uploads', '')}`;
   };
 
   useEffect(() => {

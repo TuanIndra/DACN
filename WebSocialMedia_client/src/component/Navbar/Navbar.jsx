@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import logo from "../../assets/logo.jpg";
 import { RiGroupLine } from "react-icons/ri";
 import { IoMdHelpCircleOutline } from "react-icons/io";
@@ -19,31 +19,31 @@ const Navbar = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const notifRef = useRef(null);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const auth = getAuth(app);
   const userId = localStorage.getItem('userId');
 
-  const toggleNotif = () => setIsNotifOpen(!isNotifOpen);
-
-  useEffect(() => {
-    if (userId) {
-      const fetchNotifications = async () => {
-        try {
-          const response = await fetchUserNotificationsById(userId);
-          setNotifications(response.data);
-          const unread = response.data.filter((notif) => !notif.isRead).length;
-          setUnreadCount(unread);
-        } catch (err) {
-          console.error('Error fetching notifications:', err);
-        }
-      };
-
+  const toggleNotif = () => {
+    setIsNotifOpen(!isNotifOpen);
+    if (!isNotifOpen) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
-
-      return () => clearInterval(interval);
     }
-  }, [userId]);
+  };
+
+  const fetchNotifications = async () => {
+    if (userId) {
+      try {
+        const response = await fetchUserNotificationsById(userId);
+        setNotifications(response.data);
+        const unread = response.data.filter((notif) => !notif.isRead).length;
+        setUnreadCount(unread);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+      }
+    }
+  };
 
   const handleLogout = () => {
     signOut(auth)
@@ -54,16 +54,32 @@ const Navbar = () => {
       .catch((error) => console.error('Lỗi khi đăng xuất:', error));
   };
 
+  const handleClickOutside = (event) => {
+    if (notifRef.current && !notifRef.current.contains(event.target)) {
+      setIsNotifOpen(false);
+    }
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="shadow-md bg-white dark:bg-gray-900 dark:text-white transition relative z-40">
       <div className="bg-primary/40 py-2">
         <div className="container flex justify-between items-center h-14">
           {/* Logo */}
           <div className="flex items-center">
-            <a href="/homepage" className="font-bold text-2xl sm:text-3xl flex items-center">
+            <NavLink to="/homepage" className="font-bold text-2xl sm:text-3xl flex items-center">
               <img src={logo} alt="logo" className="w-12 h-12 rounded-full border-2 border-black" />
               <span className="ml-2 uppercase">ᴄᴀᴘʏᴊᴏʏ</span>
-            </a>
+            </NavLink>
           </div>
 
           {/* Search Bar */}
@@ -71,18 +87,18 @@ const Navbar = () => {
 
           {/* Navigation Icons */}
           <div className="flex items-center space-x-4">
-            <a href="/friends" className="group hover:bg-primary/30 p-2 rounded">
+            <NavLink to="/friends" className="group hover:bg-primary/30 p-2 rounded">
               <RiGroupLine className="text-primary w-8 h-8" />
-            </a>
-            <a href="/groups" className="group hover:bg-primary/30 p-2 rounded">
+            </NavLink>
+            <NavLink to="/groups" className="group hover:bg-primary/30 p-2 rounded">
               <HiOutlineUserGroup className="text-primary w-8 h-8" />
-            </a>
-            <a href="/videos" className="group hover:bg-primary/30 p-2 rounded">
+            </NavLink>
+            <NavLink to="/videos" className="group hover:bg-primary/30 p-2 rounded">
               <MdOndemandVideo className="text-primary w-8 h-8" />
-            </a>
+            </NavLink>
 
             {/* Notifications */}
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button onClick={toggleNotif} className="relative focus:outline-none group">
                 <MdNotifications className="text-primary w-8 h-8" />
                 {unreadCount > 0 && (
@@ -92,7 +108,7 @@ const Navbar = () => {
                 )}
               </button>
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 max-h-80 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-10 overflow-y-auto">
+                <div className="animate-slideUp absolute right-0 mt-2 w-80 max-h-80 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-10 overflow-y-auto">
                   <NotificationList notifications={notifications} userId={userId} />
                 </div>
               )}
@@ -100,7 +116,7 @@ const Navbar = () => {
           </div>
 
           {/* User Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="group hover:bg-primary/30 p-2 rounded"
@@ -108,27 +124,26 @@ const Navbar = () => {
               <RxAvatar className="text-primary w-8 h-8" />
             </button>
             {dropdownOpen && (
-              <div className="absolute top-12 right-0 bg-white dark:bg-gray-800 border rounded-lg shadow-md py-2 w-48">
-                <a
-                  href={`/profile/${userId}`}
+              <div className="animate-slideUp absolute top-12 right-0 bg-white dark:bg-gray-800 border rounded-lg shadow-md py-2 w-48">
+                <NavLink
+                  to={`/profile/${userId}`}
                   className="flex items-center px-4 py-2 hover:bg-primary/30 rounded"
                 >
                   <RxAvatar className="text-primary w-6 h-6 mr-2" />
                   Trang cá nhân
-                </a>
-                <a href="/settings" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
+                </NavLink>
+                <NavLink to="/settings" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
                   <MdOutlineSettings className="text-primary w-6 h-6 mr-2" />
                   Cài đặt
-                </a>
-
-                <a href="/feedback" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
+                </NavLink>
+                <NavLink to="/feedback" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
                   <MdOutlineFeedback className="text-primary w-6 h-6 mr-2" />
                   Góp ý
-                </a>
-                <a href="/help" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
+                </NavLink>
+                <NavLink to="/help" className="flex items-center px-4 py-2 hover:bg-primary/30 rounded">
                   <IoMdHelpCircleOutline className="text-primary w-6 h-6 mr-2" />
                   Trợ giúp
-                </a>
+                </NavLink>
                 <button
                   onClick={handleLogout}
                   className="flex items-center w-full px-4 py-2 hover:bg-primary/30 rounded"

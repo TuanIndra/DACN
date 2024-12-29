@@ -5,18 +5,20 @@ import {
   deleteNotification,
 } from '../../api/notificationsApi';
 
-const NotificationList = ({ userId }) => {
+const NotificationList = ({ loggedInUserId }) => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Lấy thông báo từ API
   useEffect(() => {
     const getNotifications = async () => {
       try {
         setLoading(true);
-        const response = await fetchUserNotifications(userId); // Sử dụng userId nếu cần
-        setNotifications(response.data);
+        const response = await fetchUserNotifications(loggedInUserId);
+        const filteredNotifications = response.data.filter(
+          (notif) => notif.recipientId === loggedInUserId
+        );
+        setNotifications(filteredNotifications);
       } catch (err) {
         console.error('Error fetching notifications:', err);
         setError('Không thể tải thông báo. Vui lòng thử lại sau.');
@@ -30,9 +32,8 @@ const NotificationList = ({ userId }) => {
     // Polling để cập nhật thông báo mới mỗi 30 giây
     const interval = setInterval(getNotifications, 30000);
     return () => clearInterval(interval); // Dọn dẹp interval
-  }, [userId]);
+  }, [loggedInUserId]);
 
-  // Đánh dấu tất cả thông báo là đã đọc
   const handleMarkAllAsRead = async () => {
     try {
       await Promise.all(
@@ -41,7 +42,6 @@ const NotificationList = ({ userId }) => {
           .map((notif) => markNotificationAsRead(notif.id))
       );
 
-      // Cập nhật trạng thái thông báo trong state
       setNotifications((prevNotifications) =>
         prevNotifications.map((notif) => ({
           ...notif,
@@ -54,7 +54,6 @@ const NotificationList = ({ userId }) => {
     }
   };
 
-  // Xóa thông báo cụ thể
   const handleDeleteNotification = async (notificationId) => {
     try {
       await deleteNotification(notificationId);
@@ -67,7 +66,6 @@ const NotificationList = ({ userId }) => {
     }
   };
 
-  // Xử lý URL avatar
   const getAvatarUrl = (avatarUrl) => {
     const defaultAvatarUrl = 'http://26.159.243.47:8082/uploads/default-avatar.png';
     if (!avatarUrl || avatarUrl === defaultAvatarUrl) {

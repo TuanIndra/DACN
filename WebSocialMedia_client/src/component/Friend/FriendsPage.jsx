@@ -5,6 +5,7 @@ import {
   acceptFriendRequest,
   cancelFriendRequest,
 } from '../../api/friendshipApi';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import Navbar from '../../component/Navbar/Navbar';
 
 const FriendsPage = () => {
@@ -12,6 +13,9 @@ const FriendsPage = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
+
+  const navigate = useNavigate(); // Khởi tạo useNavigate
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +34,12 @@ const FriendsPage = () => {
 
     fetchData();
   }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setTabLoading(true);
+    setTimeout(() => setTabLoading(false), 300);
+  };
 
   const getAvatarUrl = (avatarUrl) => {
     const defaultAvatarUrl = 'http://26.159.243.47:8082/uploads/default-avatar.png';
@@ -70,6 +80,10 @@ const FriendsPage = () => {
     }
   };
 
+  const handleNavigateToProfile = (friendId) => {
+    navigate(`/profile/${friendId}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -93,7 +107,7 @@ const FriendsPage = () => {
                 ? 'bg-primary text-white'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-primary hover:text-white'
             }`}
-            onClick={() => setActiveTab('pendingRequests')}
+            onClick={() => handleTabChange('pendingRequests')}
           >
             Lời mời kết bạn
           </button>
@@ -103,7 +117,7 @@ const FriendsPage = () => {
                 ? 'bg-primary text-white'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-primary hover:text-white'
             }`}
-            onClick={() => setActiveTab('friends')}
+            onClick={() => handleTabChange('friends')}
           >
             Bạn bè
           </button>
@@ -111,80 +125,89 @@ const FriendsPage = () => {
 
         {/* Main Content */}
         <div className="w-3/4 p-6">
-          {activeTab === 'pendingRequests' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-                Lời mời kết bạn
-              </h1>
-              {pendingRequests.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-400">
-                  Không có lời mời kết bạn nào.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {pendingRequests.map((request) => (
-                    <div
-                      key={request.id}
-                      className="bg-white dark:bg-gray-800 p-4 shadow-md rounded-lg text-center"
-                    >
-                      <img
-                        src={getAvatarUrl(request.requester?.avatarUrl)}
-                        alt={request.requester?.fullName || 'Người dùng'}
-                        className="w-16 h-16 rounded-full mx-auto object-cover"
-                      />
-                      <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
-                        {request.requester?.fullName || 'Ẩn danh'}
-                      </h3>
-                      <div className="flex justify-around mt-4">
-                        <button
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
-                          onClick={() => handleAcceptRequest(request.id)}
+          {tabLoading ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500 dark:text-gray-400">Đang chuyển tab...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'pendingRequests' && (
+                <div>
+                  <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+                    Lời mời kết bạn
+                  </h1>
+                  {pendingRequests.length === 0 ? (
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Không có lời mời kết bạn nào.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {pendingRequests.map((request) => (
+                        <div
+                          key={request.id}
+                          className="bg-white dark:bg-gray-800 p-4 shadow-md rounded-lg text-center"
                         >
-                          Đồng ý
-                        </button>
-                        <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
-                          onClick={() => handleDeclineRequest(request.id)}
-                        >
-                          Từ chối
-                        </button>
-                      </div>
+                          <img
+                            src={getAvatarUrl(request.requester?.avatarUrl)}
+                            alt={request.requester?.fullName || 'Người dùng'}
+                            className="w-16 h-16 rounded-full mx-auto object-cover"
+                          />
+                          <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
+                            {request.requester?.fullName || 'Ẩn danh'}
+                          </h3>
+                          <div className="flex justify-around mt-4">
+                            <button
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
+                              onClick={() => handleAcceptRequest(request.id)}
+                            >
+                              Đồng ý
+                            </button>
+                            <button
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+                              onClick={() => handleDeclineRequest(request.id)}
+                            >
+                              Từ chối
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {activeTab === 'friends' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-                Bạn bè
-              </h1>
-              {friends.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-400">
-                  Bạn chưa có bạn bè nào.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {friends.map((friend) => (
-                    <div
-                      key={friend.id}
-                      className="bg-white dark:bg-gray-800 p-4 shadow-md rounded-lg text-center"
-                    >
-                      <img
-                        src={getAvatarUrl(friend.avatarUrl)}
-                        alt={friend.fullName || 'Người dùng'}
-                        className="w-16 h-16 rounded-full mx-auto object-cover"
-                      />
-                      <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
-                        {friend.fullName || 'Ẩn danh'}
-                      </h3>
+              {activeTab === 'friends' && (
+                <div>
+                  <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
+                    Bạn bè
+                  </h1>
+                  {friends.length === 0 ? (
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Bạn chưa có bạn bè nào.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {friends.map((friend) => (
+                        <div
+                          key={friend.id}
+                          onClick={() => handleNavigateToProfile(friend.id)}
+                          className="bg-white dark:bg-gray-800 p-4 shadow-md rounded-lg text-center cursor-pointer hover:bg-primary/10 transition"
+                        >
+                          <img
+                            src={getAvatarUrl(friend.avatarUrl)}
+                            alt={friend.fullName || 'Người dùng'}
+                            className="w-16 h-16 rounded-full mx-auto object-cover"
+                          />
+                          <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
+                            {friend.fullName || 'Ẩn danh'}
+                          </h3>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </div>

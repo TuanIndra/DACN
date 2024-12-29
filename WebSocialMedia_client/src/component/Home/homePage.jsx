@@ -45,7 +45,7 @@ const HomePage = () => {
         <div className="flex-grow lg:ml-[20%] lg:mr-[20%] max-w-3xl mx-auto px-4 pt-4 pb-6">
           {/* "What's on your mind?" */}
           <div
-            className="cursor-pointer bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-4 rounded-lg shadow-md mb-6 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="cursor-pointer bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-4 rounded-lg shadow-md mb-6 hover:bg-gray-100 dark:hover:bg-gray-700 transition-transform transform hover:scale-105"
             onClick={handleShowCreatePost}
           >
             <span className="text-lg">Bạn đang nghĩ gì?</span>
@@ -63,8 +63,14 @@ const HomePage = () => {
 
       {/* Create Post Modal */}
       {showCreatePost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-[90%] lg:w-[70%] max-h-[90%] overflow-auto relative">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-fadeIn"
+          onClick={handleCloseCreatePost}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-[90%] lg:w-[70%] max-h-[90%] overflow-auto relative animate-slideUp"
+            onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking inside
+          >
             <button
               className="absolute top-4 right-4 text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white"
               onClick={handleCloseCreatePost}

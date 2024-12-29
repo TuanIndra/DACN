@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { updateAvatar } from '../../api/authApi';
-
+import { FaCamera } from "react-icons/fa";
 const getAvatarUrl = (avatarUrl) => {
     // URL for the default avatar in the database
     const defaultAvatarUrl = 'http://26.159.243.47:8082/uploads/default-avatar.png';
@@ -62,7 +62,7 @@ const ProfileHeader = ({ profile, userId, loggedInUserId }) => {
               className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 cursor-pointer shadow-md"
               title="Thay đổi ảnh đại diện"
             >
-              ✏️
+              <FaCamera />
             </label>
           )}
           <input

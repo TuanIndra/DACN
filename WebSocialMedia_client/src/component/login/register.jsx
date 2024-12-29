@@ -52,7 +52,7 @@ const Register = () => {
       await register(fullName, username, email, password);
 
       // On successful registration
-      setIsLoading(false); // Hide loading
+      setIsLoading(false); // Hide loadingin
       setIsSuccess(true); // Show success popup
       setSuccessMessage('Đăng ký thành công! Vui lòng xác thực email của bạn.');
 

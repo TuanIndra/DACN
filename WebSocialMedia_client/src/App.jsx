@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './component/login/login';
 import Homepage from './component/Home/homePage';
 import Register from './component/login/register';
-import PostDetail from './component/Home/PostDetail';
+import PostDetail from './component/Post/PostDetail';
 import ChatPage from './component/Chat/ChatPage';
 import FriendsPage from './component/Friend/FriendsPage';
 import Profile from './component/Profile/profile';
@@ -18,6 +18,7 @@ import { AuthProvider } from '../src/component/context/AuthContext';
 import NotificationList from './component/Notifications/NotificationsList';
 import FeedbackPage from './component/Home/FeedbackPage';
 import Page404 from './component/Home/Page404';
+
 const App = () => {
   const userId = localStorage.getItem('userId');
   return (
@@ -38,7 +39,7 @@ const App = () => {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/groups" element={<GroupList />} />
           <Route path="/chat/:receiverId" element={<ChatPage />} />
-         
+          <Route path = "/welcome" element={<Welcome></Welcome>}></Route>
           <Route path="/notifications" element={<NotificationList userId={userId} />} />
           <Route path="/groups/create" element={<CreateGroup />} />
           <Route path="/groups/:groupId" element={<GroupDetailPage />} />
